@@ -16,7 +16,8 @@ required_pkgs <- c(
   "shiny", "shinyjs", "shinydashboard",
   "bslib", "sass", "readxl", "openxlsx",
   "dplyr", "ggplot2", "plotly", "htmlwidgets", "DT",
-  "zip", "scales", "rhandsontable", "shinyjqui"
+  "zip", "scales", "rhandsontable", "shinyjqui",
+  "stringr", "RColorBrewer", "writexl", "purrr", "tidyr"
 )
 
 # Installe & charge tous les paquets

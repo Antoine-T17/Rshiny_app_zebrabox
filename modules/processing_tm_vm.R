@@ -21,6 +21,11 @@ processing_tm_vm_ui <- function(id) {
     box(
       title = "Processing Results",
       width = 7,
+      
+      # Clear Console button
+      div(style = "margin-bottom: 10px;",
+          actionButton(ns("clear_console"), "Clear Console", icon = icon("trash"))),
+      
       tabsetPanel(
         tabPanel("Console Output", 
                  div(
@@ -48,6 +53,12 @@ processing_tm_vm_server <- function(id, rv) {
       current_messages <- console_messages()
       console_messages(c(current_messages, message))
     }
+    
+    # Observer to clear the console when the button is clicked
+    observeEvent(input$clear_console, {
+      console_messages(character())           # reset to empty character vector
+      showNotification("Console cleared", type = "message")
+    })
     
     # Helper function to determine if removal should proceed
     should_remove <- function(x) {
@@ -593,7 +604,7 @@ processing_tm_vm_server <- function(id, rv) {
     
     output$console_output <- renderUI({
       messages <- console_messages()
-      if (length(messages) == 0) return(HTML("No messages yet."))
+      if (length(messages) == 0) return(HTML("👻 No messages yet."))
       HTML(paste(sapply(messages, htmltools::htmlEscape), collapse = "<br>"))
     })
   })

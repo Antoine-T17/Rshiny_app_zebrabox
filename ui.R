@@ -161,6 +161,7 @@ dashboard_body <- dashboardBody(
 dashboardPage(
   header = header_items,
   sidebar = sidebar_content,
-  body = dashboard_body
+  body = dashboard_body,
+  skin = "red"
 )
 

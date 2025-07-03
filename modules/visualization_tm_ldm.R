@@ -1,17 +1,3 @@
-library(stringr)
-library(RColorBrewer)
-library(shiny)
-library(dplyr)
-library(ggplot2)
-library(plotly)
-library(htmlwidgets)
-library(zip)
-library(DT)
-library(writexl)
-library(openxlsx)
-library(purrr)
-library(tidyr)
-
 # Themes
 light_theme <- function(base_size = 11, base_family = "") {
   theme_bw(base_size = base_size, base_family = base_family) %+replace% theme(
