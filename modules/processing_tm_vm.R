@@ -489,7 +489,7 @@ processing_tm_vm_server <- function(id, rv) {
           )
         }
         
-        add_console_message("✅ Data extraction, enrichment, and period assignment completed for all plates!")
+        add_console_message("/n ✅ Data extraction, enrichment, and period assignment completed for all plates!")
         
         rv$processing_results <- list(
           Processed_Data_list = Processed_Data_list,

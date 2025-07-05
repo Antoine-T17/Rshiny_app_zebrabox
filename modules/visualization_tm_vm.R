@@ -184,6 +184,10 @@ visualization_tm_vm_ui <- function(id) {
     box(
       title = "Visualization Output",
       width = 8,
+      div(
+        style = "margin-bottom: 10px;",
+        actionButton(ns("clear_console"), "Clear Console", icon = icon("trash"))
+      ),
       tabsetPanel(
         id = ns("output_tabs"),
         tabPanel("Interactive Figure",
@@ -268,6 +272,11 @@ visualization_tm_vm_server <- function(id, rv) {
     add_console_message <- function(msg) {
       console_messages(c(console_messages(), msg))
     }
+    
+    observeEvent(input$clear_console, {
+      console_messages("👻 No messages yet.")
+      showNotification("console cleared", type = "message")
+    })
     
     ensure_directory <- function(path) {
       if (!dir.exists(path)) dir.create(path, recursive = TRUE)
