@@ -108,8 +108,6 @@ visualization_tm_ldm_ui <- function(id) {
       # --- LINEPLOT ---
       conditionalPanel(
         condition = sprintf("input['%s'] == 'lineplot'", ns("plot_type")),
-        selectInput(ns("lineplot_replicate_mode"), "Replicate Mode",
-                    choices = c("pooled", "separated"), selected = "pooled"),
         selectInput(ns("time_unit_original"), "Original Time Unit",
                     choices = c("seconds", "minutes", "hours", "days"), selected = "seconds"),
         selectInput(ns("time_unit_convert"), "Convert Time Unit?",

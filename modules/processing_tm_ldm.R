@@ -277,7 +277,7 @@ processing_tm_ldm_server <- function(id, rv) {
             } else if (length(parts) == 2) {
               parts
             } else {
-              stop("Chaque transition doit contenir au plus un tiret (‘-’).")
+              stop("Each transition must contains an hyphen (‘-’).")
             }
           })
           
