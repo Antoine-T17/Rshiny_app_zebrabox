@@ -17,7 +17,7 @@ required_pkgs <- c(
   "bslib", "sass", "readxl", "openxlsx",
   "dplyr", "ggplot2", "plotly", "htmlwidgets", "DT",
   "zip", "scales", "rhandsontable", "shinyjqui",
-  "stringr", "RColorBrewer", "writexl", "purrr", "tidyr"
+  "stringr", "RColorBrewer", "writexl", "purrr", "tidyr", "fmsb"
 )
 
 # Installe & charge tous les paquets
