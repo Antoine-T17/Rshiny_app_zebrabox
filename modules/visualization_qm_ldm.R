@@ -39,7 +39,7 @@ dark_theme <- function(base_size = 11, base_family = "") {
 }
 
 # UI for Visualization Module, Light-Dark Mode
-visualization_tm_ldm_ui <- function(id) {
+visualization_qm_ldm_ui <- function(id) {
   ns <- NS(id)
   fluidRow(
     box(
@@ -111,6 +111,8 @@ visualization_tm_ldm_ui <- function(id) {
           selectInput(ns("time_unit_target"), "Target Time Unit",
                       choices = c("seconds", "minutes", "hours", "days"), selected = "minutes")
         ),
+        selectInput(ns("lineplot_replicate_mode"), "Replicate Mode",
+                    choices = c("pooled", "separated"), selected = "pooled"),
         uiOutput(ns("aggregation_period_label")),
         actionButton(ns("generate_lineplot_dfs"), "Generate Lineplot Datasets"),
         div(style = "margin-bottom: 30px;"),
@@ -161,11 +163,7 @@ visualization_tm_ldm_ui <- function(id) {
           condition = sprintf("input['%s'] == 'boxplot_delta'", ns("plot_type")),
           actionButton(ns("generate_delta_tables"),
                        "Generate Delta Percentage Tables",
-                       style = "width: 100%;"),
-          # Nouveau bouton pour tout générer et zipper
-          downloadButton(ns("download_delta_for_type"),
-                         "Download All Figures for This Plot Type (.zip)",
-                         style = "width: 100%; margin-top: 10px;")
+                       style = "width: 100%;")
         )
       )
     ),
@@ -228,7 +226,7 @@ visualization_tm_ldm_ui <- function(id) {
                                          "Condition Comparisons"),
                              selected = "Momentum Comparisons"),
                  selectInput(ns("delta_table_var"), "Response Variable",
-                             choices = c("", "frect", "fredur", "midct", "middur", "burct", "burdur",
+                             choices = c("frect", "fredur", "midct", "middur", "burct", "burdur",
                                          "zerct", "zerdur", "actinteg"),
                              selected = "totaldist"),
                  DT::dataTableOutput(ns("delta_percentage_table")),
@@ -245,7 +243,7 @@ visualization_tm_ldm_ui <- function(id) {
 }
 
 # Server for Visualization Module, Light-Dark Mode
-visualization_tm_ldm_server <- function(id, rv) {
+visualization_qm_ldm_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     console_messages <- reactiveVal(character())
@@ -256,7 +254,7 @@ visualization_tm_ldm_server <- function(id, rv) {
     
     observeEvent(input$clear_console, {
       console_messages("👻 No messages yet.")
-      showNotification("console cleared", type = "message")
+      showNotification("Console cleared!", type = "message")
     })
     
     ensure_directory <- function(path) {
@@ -429,8 +427,7 @@ visualization_tm_ldm_server <- function(id, rv) {
         if (length(missing_cols <- setdiff(required_cols, colnames(all_zone_combined))) > 0) {
           add_console_message(sprintf("Warning: Missing columns: %s", paste(missing_cols, collapse = ", ")))
         }
-        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur",
-                           "zerct", "zerdur", "actinteg")
+        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
         unique_periods <- unique(all_zone_combined$period_without_numbers)
         add_console_message(sprintf("Detected periods: %s", paste(unique_periods, collapse = ", ")))
         
@@ -455,7 +452,8 @@ visualization_tm_ldm_server <- function(id, rv) {
         ))
         
         calculate_means <- function(var) {
-          all_zone_combined %>%
+          add_console_message(sprintf("Debug: Processing response variable %s", var))
+          df <- all_zone_combined %>%
             filter(period_without_numbers %in% c(light_period, dark_period)) %>%
             group_by(period_without_numbers, zone, condition_tagged, plate_id) %>%
             summarise(
@@ -468,7 +466,13 @@ visualization_tm_ldm_server <- function(id, rv) {
               mean_val = mean(.data[[var]], na.rm = TRUE),
               .groups = "drop"
             )
+          add_console_message(sprintf("Debug: %s dataset has %d rows", var, nrow(df)))
+          if (all(is.na(df$mean_val) | is.nan(df$mean_val))) {
+            add_console_message(sprintf("Warning: All mean_val for %s are NA or NaN", var))
+          }
+          df
         }
+        
         rv$all_zone_combined_light_dark_boxplots <- setNames(lapply(response_vars, calculate_means), response_vars)
         add_console_message("Processed_data_for_light_dark_boxplots created.")
       }, error = function(e) {
@@ -487,19 +491,34 @@ visualization_tm_ldm_server <- function(id, rv) {
           add_console_message("Error: Processed_Data_list not found in rv$processing_results.")
           return()
         }
+        add_console_message(sprintf("Debug: Processed_Data_list has %d elements", length(rv$processing_results$Processed_Data_list)))
         rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
         all_zone_combined <- bind_rows(rv$Processed_Data_list)
         rv$all_zone_combined <- all_zone_combined
-        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur",
-                           "zerct", "zerdur", "actinteg")
+        add_console_message(sprintf("Debug: all_zone_combined has %d rows and columns: %s", nrow(all_zone_combined), paste(colnames(all_zone_combined), collapse = ", ")))
+        
+        required_cols <- c("condition_grouped", "zone", "plate_id", "animal", "condition_tagged", "frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
+        missing_cols <- setdiff(required_cols, colnames(all_zone_combined))
+        if (length(missing_cols) > 0) {
+          add_console_message(sprintf("Error: Missing columns in all_zone_combined: %s", paste(missing_cols, collapse = ", ")))
+          return()
+        }
+        
+        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
         summarize_cum_box <- function(var) {
-          all_zone_combined %>%
+          add_console_message(sprintf("Debug: Processing response variable %s", var))
+          df <- all_zone_combined %>%
             group_by(condition_grouped, zone, plate_id, animal) %>%
             summarise(
               cum = sum(.data[[var]], na.rm = TRUE),
               condition_tagged = first(condition_tagged),
               .groups = "drop"
             )
+          add_console_message(sprintf("Debug: %s dataset has %d rows", var, nrow(df)))
+          if (all(is.na(df$cum) | is.nan(df$cum))) {
+            add_console_message(sprintf("Warning: All cum values for %s are NA or NaN", var))
+          }
+          df
         }
         rv$all_zone_combined_cum_boxplots <- setNames(lapply(response_vars, summarize_cum_box), response_vars)
         add_console_message("Processed_data_for_cumulated_boxplots created.")
@@ -575,25 +594,43 @@ visualization_tm_ldm_server <- function(id, rv) {
           add_console_message("Error: Processed_Data_list not found in rv$processing_results.")
           return()
         }
+        add_console_message(sprintf("Debug: Processed_Data_list has %d elements", length(rv$processing_results$Processed_Data_list)))
         rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
         all_zone_combined <- bind_rows(rv$Processed_Data_list)
         rv$all_zone_combined <- all_zone_combined
+        add_console_message(sprintf("Debug: all_zone_combined has %d rows and columns: %s", nrow(all_zone_combined), paste(colnames(all_zone_combined), collapse = ", ")))
+        
+        # Check required columns
+        required_cols <- c("condition", "condition_grouped", "zone", "start", "animal", "frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
+        missing_cols <- setdiff(required_cols, colnames(all_zone_combined))
+        if (length(missing_cols) > 0) {
+          add_console_message(sprintf("Error: Missing columns in all_zone_combined: %s", paste(missing_cols, collapse = ", ")))
+          return()
+        }
+        
         wells_per_condition <- compute_wells(all_zone_combined)
         rv$wells_per_condition <- wells_per_condition
         add_console_message("Well counts per condition and zone computed.")
+        
         target_unit <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
+        add_console_message(sprintf("Debug: Aggregation period input: %s, Original unit: %s, Target unit: %s, Convert: %s", 
+                                    input$aggregation_period, input$time_unit_original, target_unit, input$time_unit_convert))
+        
         if (!validate_aggregation_period(input$aggregation_period, input$time_unit_original, target_unit, input$time_unit_convert)) {
+          add_console_message("Error: Invalid aggregation period. Stopping lineplot dataset generation.")
           return()
         }
-        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur",
-                           "zerct", "zerdur", "actinteg")
+        
+        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
         summarize_line <- function(var) {
+          add_console_message(sprintf("Debug: Processing response variable %s", var))
           agg_period <- as.numeric(input$aggregation_period)
           agg_unit <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
           agg_seconds <- convert_time(agg_period, agg_unit, "seconds")
           add_console_message(sprintf("Debug: Aggregation period for %s is %s %s (= %s seconds)", var, agg_period, agg_unit, round(agg_seconds, 2)))
           
           group_var <- if (input$lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
+          add_console_message(sprintf("Debug: Using group_var: %s", group_var))
           
           df <- all_zone_combined %>%
             mutate(start_rounded = floor(start / agg_seconds) * agg_seconds) %>%
@@ -629,6 +666,7 @@ visualization_tm_ldm_server <- function(id, rv) {
           }
           df
         }
+        
         rv$all_zone_combined_lineplots <- setNames(lapply(response_vars, summarize_line), response_vars)
         add_console_message("Processed_data_for_lineplots created.")
       }, error = function(e) {
@@ -1588,52 +1626,6 @@ visualization_tm_ldm_server <- function(id, rv) {
         temp_dir <- tempdir()
         files <- c(rv$delta_momentum_excel, rv$delta_condition_excel)
         zip::zip(file, files = files, root = temp_dir)
-      },
-      contentType = "application/zip"
-    )
-    
-    output$download_all_for_type <- downloadHandler(
-      filename = function() {
-        sprintf("%s_all_figures_%s.zip", input$plot_type, format(Sys.time(), "%Y%m%d_%H%M%S"))
-      },
-      content = function(zipfile) {
-        tmp_dir <- file.path(tempdir(), paste0("all_figs_", input$plot_type))
-        ensure_directory(tmp_dir)
-        dfs_list <- switch(
-          input$plot_type,
-          "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots,
-          "boxplot_cumulate"   = rv$all_zone_combined_cum_boxplots,
-          "boxplot_delta"      = rv$all_zone_combined_delta_boxplots,
-          "lineplot"           = rv$all_zone_combined_lineplots
-        )
-        condition_order <- if (nchar(input$condition_grouped_order)) trimws(strsplit(input$condition_grouped_order, ",")[[1]]) else unique(dfs_list[[1]]$condition_grouped)
-        condition_colors <- if (nchar(input$condition_grouped_color)) trimws(strsplit(input$condition_grouped_color, ",")[[1]]) else brewer.pal(length(condition_order), "Set1")
-        
-        for (var in names(dfs_list)) {
-          df_var <- dfs_list[[var]]
-          for (z in sort(unique(df_var$zone))) {
-            mode <- switch(input$plot_type,
-                           "boxplot_light_dark" = input$boxplot_light_dark_mode,
-                           "boxplot_cumulate"   = "separated",
-                           "boxplot_delta"      = input$boxplot_delta_mode,
-                           "lineplot"           = input$lineplot_replicate_mode)
-            fname <- sprintf("%s_%s_zone%s_%s_%s_%s.png",
-                             input$plot_type, var, z, tolower(input$theme_switch), mode, input$boxplot_fill_mode)
-            path_out <- file.path(tmp_dir, fname)
-            p <- generate_plot(
-              df = df_var, response_var = var, plot_type = input$plot_type,
-              boxplot_mode = mode, lineplot_replicate_mode = input$lineplot_replicate_mode,
-              selected_zone = z, theme_choice = input$theme_switch,
-              condition_order = condition_order, condition_colors = condition_colors
-            )
-            ggsave(path_out, plot = p, width = 10, height = 6, dpi = 300)
-            add_console_message(sprintf("✔️ PNG généré : %s", path_out))
-          }
-        }
-        
-        # Utiliser zip::zip avec chemins complets
-        files <- list.files(tmp_dir, full.names = TRUE)
-        zip::zip(zipfile, files = files, root = tmp_dir)
       },
       contentType = "application/zip"
     )

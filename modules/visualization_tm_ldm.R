@@ -169,11 +169,7 @@ visualization_tm_ldm_ui <- function(id) {
           condition = sprintf("input['%s'] == 'boxplot_delta'", ns("plot_type")),
           actionButton(ns("generate_delta_tables"),
                        "Generate Delta Percentage Tables",
-                       style = "width: 100%;"),
-          # Nouveau bouton pour tout générer et zipper
-          downloadButton(ns("download_delta_for_type"),
-                         "Download All Figures for This Plot Type (.zip)",
-                         style = "width: 100%; margin-top: 10px;")
+                       style = "width: 100%;")
         )
       )
     ),
@@ -273,7 +269,7 @@ visualization_tm_ldm_server <- function(id, rv) {
     
     observeEvent(input$clear_console, {
       console_messages("👻 No messages yet.")
-      showNotification("console cleared", type = "message")
+      showNotification("Console cleared!", type = "message")
     })
     
     ensure_directory <- function(path) {
@@ -1611,52 +1607,6 @@ visualization_tm_ldm_server <- function(id, rv) {
         temp_dir <- tempdir()
         files <- c(rv$delta_momentum_excel, rv$delta_condition_excel)
         zip::zip(file, files = files, root = temp_dir)
-      },
-      contentType = "application/zip"
-    )
-    
-    output$download_all_for_type <- downloadHandler(
-      filename = function() {
-        sprintf("%s_all_figures_%s.zip", input$plot_type, format(Sys.time(), "%Y%m%d_%H%M%S"))
-      },
-      content = function(zipfile) {
-        tmp_dir <- file.path(tempdir(), paste0("all_figs_", input$plot_type))
-        ensure_directory(tmp_dir)
-        dfs_list <- switch(
-          input$plot_type,
-          "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots,
-          "boxplot_cumulate"   = rv$all_zone_combined_cum_boxplots,
-          "boxplot_delta"      = rv$all_zone_combined_delta_boxplots,
-          "lineplot"           = rv$all_zone_combined_lineplots
-        )
-        condition_order <- if (nchar(input$condition_grouped_order)) trimws(strsplit(input$condition_grouped_order, ",")[[1]]) else unique(dfs_list[[1]]$condition_grouped)
-        condition_colors <- if (nchar(input$condition_grouped_color)) trimws(strsplit(input$condition_grouped_color, ",")[[1]]) else brewer.pal(length(condition_order), "Set1")
-        
-        for (var in names(dfs_list)) {
-          df_var <- dfs_list[[var]]
-          for (z in sort(unique(df_var$zone))) {
-            mode <- switch(input$plot_type,
-                           "boxplot_light_dark" = input$boxplot_light_dark_mode,
-                           "boxplot_cumulate"   = "separated",
-                           "boxplot_delta"      = input$boxplot_delta_mode,
-                           "lineplot"           = input$lineplot_replicate_mode)
-            fname <- sprintf("%s_%s_zone%s_%s_%s_%s.png",
-                             input$plot_type, var, z, tolower(input$theme_switch), mode, input$boxplot_fill_mode)
-            path_out <- file.path(tmp_dir, fname)
-            p <- generate_plot(
-              df = df_var, response_var = var, plot_type = input$plot_type,
-              boxplot_mode = mode, lineplot_replicate_mode = input$lineplot_replicate_mode,
-              selected_zone = z, theme_choice = input$theme_switch,
-              condition_order = condition_order, condition_colors = condition_colors
-            )
-            ggsave(path_out, plot = p, width = 10, height = 6, dpi = 300)
-            add_console_message(sprintf("✔️ PNG généré : %s", path_out))
-          }
-        }
-        
-        # Utiliser zip::zip avec chemins complets
-        files <- list.files(tmp_dir, full.names = TRUE)
-        zip::zip(zipfile, files = files, root = tmp_dir)
       },
       contentType = "application/zip"
     )

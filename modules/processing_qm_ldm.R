@@ -1,5 +1,5 @@
 # UI for Tracking Mode, Light-Dark Mode
-processing_tm_ldm_ui <- function(id) {
+processing_qm_ldm_ui <- function(id) {
   ns <- NS(id)
   
   fluidRow(
@@ -44,7 +44,7 @@ processing_tm_ldm_ui <- function(id) {
 }
 
 # Server for Tracking Mode, Light-Dark Mode
-processing_tm_ldm_server <- function(id, rv) {
+processing_qm_ldm_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     console_messages <- reactiveVal(character())
@@ -187,6 +187,19 @@ processing_tm_ldm_server <- function(id, rv) {
           
           current_plan <- plate_plans[[i]]
           current_data <- extracted_data_list[[i]]
+          
+          # Step 0: Filter raw data for 'quantauc' in datatype column
+          add_console_message(sprintf("🔄 Plate %d - Filtering raw data for 'quantauc' in datatype column...", i))
+          if ("datatype" %in% colnames(current_data)) {
+            if (any(str_detect(current_data$datatype, "quantauc"))) {
+              current_data <- current_data %>% filter(str_detect(datatype, "quantauc"))
+              add_console_message(sprintf("✅ Plate %d - Filtered rows where datatype contains 'quantauc'.", i))
+            } else {
+              add_console_message(sprintf("⚠️ Plate %d - No rows with 'quantauc' in datatype, proceeding with all raw data.", i))
+            }
+          } else {
+            add_console_message(sprintf("⚠️ Plate %d - 'datatype' column not found, proceeding with all raw data.", i))
+          }
           
           # Section 1: Column Generation
           add_console_message(sprintf("---"))
@@ -425,8 +438,7 @@ processing_tm_ldm_server <- function(id, rv) {
           }
           
           # Convert numeric columns
-          num_cols_to_convert <- c("inact", "inadur", "inadist", "smlct", "smldist", "smldur",
-                                   "larct", "lardur", "lardist", "emptyct", "emptydur", "period")
+          num_cols_to_convert <- c("frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg", "period")
           current_data <- convert_numeric_cols(current_data, num_cols_to_convert)
           add_console_message(sprintf("✅ Plate %d - Numeric columns converted.", i))
           
