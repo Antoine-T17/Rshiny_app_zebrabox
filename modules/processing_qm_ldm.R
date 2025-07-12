@@ -4,7 +4,7 @@ processing_qm_ldm_ui <- function(id) {
   
   fluidRow(
     box(
-      title = "Match Raw Data to Plate Plans (Tracking Mode, Light-Dark Mode)",
+      title = "Match Raw Data to Plate Plans (Quantization Mode, Light-Dark Mode)",
       width = 5,
       h4("Associate Raw Data with Plate Plans"),
       uiOutput(ns("file_plate_selectors")),

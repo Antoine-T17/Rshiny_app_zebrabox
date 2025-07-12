@@ -39,7 +39,7 @@ dark_theme <- function(base_size = 11, base_family = "") {
 }
 
 # UI for Visualization Module, Vibration-Rest Mode
-visualization_qm_ldm_ui <- function(id) {
+visualization_qm_vm_ui <- function(id) {
   ns <- NS(id)
   fluidRow(
     box(
@@ -243,7 +243,7 @@ visualization_qm_ldm_ui <- function(id) {
 }
 
 # Server for Visualization Module, Vibration-Rest Mode
-visualization_qm_ldm_server <- function(id, rv) {
+visualization_qm_vm_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     console_messages <- reactiveVal(character())

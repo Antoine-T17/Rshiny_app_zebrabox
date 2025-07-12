@@ -46,7 +46,7 @@ visualization_qm_ldm_ui <- function(id) {
       title = "Visualization Inputs",
       width = 4,
       selectInput(ns("plot_type"), "Plot Type",
-                  choices = c("boxplot_light_dark", "boxplot_cumulate", "boxplot_delta", "lineplot"), 
+                  choices = c("boxplot_light_dark", "boxplot_cumulate", "boxplot_delta", "lineplot", "radarplot"), 
                   selected = "boxplot_light_dark"),
       div(style = "margin-bottom: 20px;"),
       
@@ -122,6 +122,15 @@ visualization_qm_ldm_ui <- function(id) {
                     selected = "")
       ),
       
+      # --- RADAR PLOT ---
+      conditionalPanel(
+        condition = sprintf("input['%s'] == 'radarplot'", ns("plot_type")),
+        actionButton(ns("generate_radar_dfs"), "Generate Radar Datasets"),
+        div(style = "margin-bottom: 30px;"),
+        selectInput(ns("radar_units"), "Units",
+                    choices = c("Raw", "Relative"), selected = "Relative")
+      ),
+      
       # --- FILL MODE COMMUN AUX BOXPLOTS ---
       conditionalPanel(
         condition = sprintf(
@@ -195,7 +204,8 @@ visualization_qm_ldm_ui <- function(id) {
                              choices = c("Boxplot Light/Dark",
                                          "Boxplot Cumulative",
                                          "Boxplot Delta",
-                                         "Lineplot"),
+                                         "Lineplot",
+                                         "Radarplot"),
                              selected = "Boxplot Light/Dark"),
                  selectInput(ns("dataset_response_var"), "Response Variable",
                              choices = c("", "frect", "fredur", "midct", "middur", "burct", "burdur",
@@ -674,13 +684,81 @@ visualization_qm_ldm_server <- function(id, rv) {
       })
     })
     
+    observeEvent(input$generate_radar_dfs, {
+      add_console_message(sprintf("Debug: rv$processing_results is %s", if (is.null(rv$processing_results)) "NULL" else "defined"))
+      tryCatch({
+        if (is.null(rv$processing_results)) {
+          add_console_message("Warning: rv$processing_results is NULL. Please run processing first.")
+          return()
+        }
+        if (!"Processed_Data_list" %in% names(rv$processing_results)) {
+          add_console_message("Error: Processed_Data_list not found in rv$processing_results.")
+          return()
+        }
+        add_console_message(sprintf("Debug: Processed_Data_list has %d elements", length(rv$processing_results$Processed_Data_list)))
+        rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
+        all_zone_combined <- bind_rows(rv$Processed_Data_list)
+        
+        # Explicitly convert response variables to numeric
+        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
+        all_zone_combined <- all_zone_combined %>%
+          mutate(across(all_of(response_vars), as.numeric))
+        
+        rv$all_zone_combined <- all_zone_combined
+        add_console_message(sprintf("Debug: all_zone_combined has %d rows and columns: %s", nrow(all_zone_combined), paste(colnames(all_zone_combined), collapse = ", ")))
+        
+        required_cols <- c("condition_grouped", "zone", "plate_id", "animal", response_vars)
+        missing_cols <- setdiff(required_cols, colnames(all_zone_combined))
+        if (length(missing_cols) > 0) {
+          add_console_message(sprintf("Error: Missing columns in all_zone_combined: %s", paste(missing_cols, collapse = ", ")))
+          return()
+        }
+        
+        # Check data types of response variables
+        non_numeric_cols <- response_vars[!sapply(all_zone_combined[, response_vars], is.numeric)]
+        if (length(non_numeric_cols) > 0) {
+          add_console_message(sprintf("Error: Non-numeric columns detected after conversion: %s", paste(non_numeric_cols, collapse = ", ")))
+          return()
+        } else {
+          add_console_message("Debug: All response variables are numeric")
+        }
+        
+        summarize_radar <- function() {
+          add_console_message("Debug: Generating radar plot dataset")
+          df <- all_zone_combined %>%
+            group_by(condition_grouped, zone) %>%
+            summarise(
+              across(all_of(response_vars), ~mean(.x, na.rm = TRUE)),
+              .groups = "drop"
+            )
+          add_console_message(sprintf("Debug: Radar dataset has %d rows", nrow(df)))
+          add_console_message(sprintf("Debug: Radar dataset columns: %s", paste(colnames(df), collapse = ", ")))
+          add_console_message(sprintf("Debug: Data types in radar dataset: %s", 
+                                      paste(sapply(df[, response_vars], class), collapse = ", ")))
+          
+          # Check for NA/NaN in response variables
+          na_check <- sapply(response_vars, function(var) all(is.na(df[[var]]) | is.nan(df[[var]])))
+          if (any(na_check)) {
+            add_console_message(sprintf("Warning: All values are NA or NaN for response variables: %s", 
+                                        paste(names(na_check)[na_check], collapse = ", ")))
+          }
+          df
+        }
+        rv$all_zone_combined_radar <- summarize_radar()
+        add_console_message("Processed_data_for_radar_plots created.")
+      }, error = function(e) {
+        add_console_message(sprintf("Error: %s", if (nzchar(e$message)) e$message else "Unknown error"))
+      })
+    })
+    
     output$dataset_table <- DT::renderDataTable({
       req(input$dataset_type, input$dataset_response_var)
       df <- switch(input$dataset_type,
                    "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots[[input$dataset_response_var]],
                    "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots[[input$dataset_response_var]],
                    "Boxplot Delta" = rv$all_zone_combined_delta_boxplots[[input$dataset_response_var]],
-                   "Lineplot" = rv$all_zone_combined_lineplots[[input$dataset_response_var]])
+                   "Lineplot" = rv$all_zone_combined_lineplots[[input$dataset_response_var]],
+                   "Radarplot" = rv$all_zone_combined_radar)
       req(df)
       DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE))
     })
@@ -691,7 +769,8 @@ visualization_qm_ldm_server <- function(id, rv) {
                    "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
                    "boxplot_cumulate" = rv$all_zone_combined_cum_boxplots[[input$response_var]],
                    "boxplot_delta" = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-                   "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]])
+                   "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]],
+                   "radarplot" = rv$all_zone_combined_radar)
       req(df)
       zones <- sort(unique(df$zone))
       selectInput(ns("selected_zone"), "Select Zone", choices = setNames(zones, paste("Zone", zones)), selected = zones[1])
@@ -981,17 +1060,86 @@ visualization_qm_ldm_server <- function(id, rv) {
             axis.text.x = element_text(angle = 45, hjust = 1)
           )
         return(if (input$output_mode == "PNG") p else p_html)
+      } else if (plot_type == "radarplot") {
+        sub <- subset(df, zone == selected_zone)
+        theme_obj <- if (tolower(theme_choice) == "light") light_theme() else dark_theme()
+        edge_col <- if (tolower(theme_choice) == "light") "black" else "white"
+        cap_text_radar <- stringr::str_wrap("Each line represents the mean values of response variables for a condition.", width = 60)
+        
+        # Prepare data for radar plot
+        response_vars <- c("frect", "fredur", "midct", "middur", "burct", "burdur", "zerct", "zerdur", "actinteg")
+        radar_data <- sub %>%
+          select(condition_grouped, all_of(response_vars)) %>%
+          rename(group = condition_grouped)
+        
+        # For fmsb, add rows for min and max values as the first two rows
+        if (input$radar_units == "Relative") {
+          radar_data <- radar_data %>%
+            mutate(across(all_of(response_vars), ~rescale(.x, to = c(0, 1))))
+          min_row <- setNames(as.list(rep(0, length(response_vars))), response_vars)
+          max_row <- setNames(as.list(rep(1, length(response_vars))), response_vars)
+        } else {
+          min_row <- setNames(as.list(sapply(radar_data[, response_vars], min, na.rm = TRUE)), response_vars)
+          max_row <- setNames(as.list(sapply(radar_data[, response_vars], max, na.rm = TRUE)), response_vars)
+        }
+        radar_data <- bind_rows(
+          as.data.frame(min_row),
+          as.data.frame(max_row),
+          radar_data
+        )
+        
+        # Generate radar plot with fmsb
+        p <- ggplot() + theme_obj  # Create a dummy ggplot object to hold theme
+        p <- plot_ly()  # Use plotly for rendering to support both PNG and HTML
+        p <- p %>% layout(
+          title = list(text = sprintf("Radar Plot (Zone %s, %s)", selected_zone, input$radar_units), 
+                       font = list(size = 14, color = edge_col)),
+          annotations = list(
+            list(x = 1, y = -0.1, text = cap_text_radar, showarrow = FALSE, 
+                 xref = "paper", yref = "paper", font = list(size = 8, color = edge_col))
+          )
+        )
+        
+        # Add radar chart using fmsb::radarchart via a custom plot_ly trace
+        radarchart(
+          radar_data,
+          axistype = 1,
+          pcol = condition_colors,
+          pfcol = scales::alpha(condition_colors, 0.3),
+          plwd = 2,
+          cglcol = "grey",
+          cglty = 1,
+          axislabcol = edge_col,
+          caxislabels = if (input$radar_units == "Relative") seq(0, 1, by = 0.25) else NULL,
+          calcex = if (input$radar_units == "Relative") 0.5 else NULL,
+          vlabels = response_vars,
+          vlcex = 0.8
+        )
+        
+        # For HTML output, return plotly object; for PNG, return static plot
+        if (input$output_mode == "HTML") {
+          p <- p %>% layout(
+            legend = list(orientation = "v", x = 1, y = 1),
+            margin = list(b = 100)
+          )
+          return(p)
+        } else {
+          # For PNG, rely on fmsb's native rendering
+          return(recordPlot())  # Capture the static plot
+        }
       }
     }    
     
     observeEvent(input$generate_figure, {
       tryCatch({
-        req(input$plot_type, input$selected_zone, input$response_var)
+        req(input$plot_type, input$selected_zone)
+        if (input$plot_type != "radarplot") req(input$response_var)
         df <- switch(input$plot_type,
                      "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
                      "boxplot_cumulate" = rv$all_zone_combined_cum_boxplots[[input$response_var]],
                      "boxplot_delta" = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-                     "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]])
+                     "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]],
+                     "radarplot" = rv$all_zone_combined_radar)
         req(df)
         group_var <- if (input$plot_type == "lineplot" && input$lineplot_replicate_mode == "separated") "condition" else "condition_grouped"
         condition_order <- if (nchar(input$condition_grouped_order) == 0) unique(df[[group_var]]) else trimws(unlist(strsplit(input$condition_grouped_order, ",")))
@@ -1000,7 +1148,7 @@ visualization_qm_ldm_server <- function(id, rv) {
         if (input$plot_type == "boxplot_light_dark") {
           df$period_without_numbers <- factor(df$period_without_numbers, levels = c("light", "dark"), labels = c("Light period", "Dark period"))
         }
-        add_console_message(sprintf("Generating %s figure for %s (Zone %s, %s theme)...", input$plot_type, input$response_var, input$selected_zone, input$theme_switch))
+        add_console_message(sprintf("Generating %s figure for %s (Zone %s, %s theme)...", input$plot_type, if (input$plot_type == "radarplot") "all variables" else input$response_var, input$selected_zone, input$theme_switch))
         p <- generate_plot(
           df = df,
           response_var = input$response_var,
@@ -1013,22 +1161,22 @@ visualization_qm_ldm_server <- function(id, rv) {
           condition_colors = condition_colors
         )
         figure_key <- paste(
-          input$response_var,
+          if (input$plot_type == "radarplot") "all_vars" else input$response_var,
           input$selected_zone,
           tolower(input$theme_switch),
-          if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          input$boxplot_fill_mode,
+          if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else if (input$plot_type == "radarplot") input$radar_units else input$lineplot_replicate_mode,
+          if (input$plot_type %in% c("boxplot_light_dark", "boxplot_cumulate", "boxplot_delta")) input$boxplot_fill_mode else "none",
           input$output_mode,
           if (input$plot_type == "boxplot_delta") input$transition_select else "",
           sep = "_"
         )
         rv$generated_figures[[figure_key]] <- list(
           plot = p,
-          var = input$response_var,
+          var = if (input$plot_type == "radarplot") "all_vars" else input$response_var,
           zone = input$selected_zone,
           theme = tolower(input$theme_switch),
-          mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          fill_mode = input$boxplot_fill_mode,
+          mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else if (input$plot_type == "radarplot") input$radar_units else input$lineplot_replicate_mode,
+          fill_mode = if (input$plot_type %in% c("boxplot_light_dark", "boxplot_cumulate", "boxplot_delta")) input$boxplot_fill_mode else "none",
           output_mode = input$output_mode,
           transition = if (input$plot_type == "boxplot_delta") input$transition_select else NULL
         )
@@ -1036,12 +1184,12 @@ visualization_qm_ldm_server <- function(id, rv) {
           if ((input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") || (input$plot_type == "boxplot_delta" && input$boxplot_delta_mode == "pooled")) {
             ggplotly(p, tooltip = "text") %>% layout(boxmode = "group")
           } else {
-            ggplotly(p, tooltip = "text")
+            ggplotly(p, tooltip = c("group", response_vars))
           }
         } else {
           p
         }
-        add_console_message(sprintf("%s figure for %s (Zone %s, %s theme, %s fill) generated.", input$plot_type, input$response_var, input$selected_zone, tolower(input$theme_switch), input$boxplot_fill_mode))
+        add_console_message(sprintf("%s figure for %s (Zone %s, %s theme, %s units) generated.", input$plot_type, if (input$plot_type == "radarplot") "all variables" else input$response_var, input$selected_zone, tolower(input$theme_switch), if (input$plot_type == "radarplot") input$radar_units else input$boxplot_fill_mode))
       }, error = function(e) {
         add_console_message(sprintf("Error: %s", e$message))
       })
@@ -1584,7 +1732,8 @@ visualization_qm_ldm_server <- function(id, rv) {
           "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots,
           "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots,
           "Boxplot Delta" = rv$all_zone_combined_delta_boxplots,
-          "Lineplot" = rv$all_zone_combined_lineplots
+          "Lineplot" = rv$all_zone_combined_lineplots,
+          "Radarplot" = list(all_vars = rv$all_zone_combined_radar)
         )
         
         for (type in names(dataset_types)) {

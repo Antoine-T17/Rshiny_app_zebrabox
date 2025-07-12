@@ -1,10 +1,10 @@
 # UI for Tracking Mode, Vibration-Rest Mode
-processing_qm_ldm_ui <- function(id) {
+processing_qm_vm_ui <- function(id) {
   ns <- NS(id)
   
   fluidRow(
     box(
-      title = "Match Raw Data to Plate Plans (Tracking Mode, Vibration-Rest Mode)",
+      title = "Match Raw Data to Plate Plans (Quantization Mode, Vibration-Rest Mode)",
       width = 5,
       h4("Associate Raw Data with Plate Plans"),
       uiOutput(ns("file_plate_selectors")),
@@ -44,7 +44,7 @@ processing_qm_ldm_ui <- function(id) {
 }
 
 # Server for Tracking Mode, Vibration-Rest Mode
-processing_qm_ldm_server <- function(id, rv) {
+processing_qm_vm_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     console_messages <- reactiveVal(character())
