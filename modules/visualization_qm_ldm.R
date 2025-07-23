@@ -1184,7 +1184,7 @@ visualization_qm_ldm_server <- function(id, rv) {
           if ((input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") || (input$plot_type == "boxplot_delta" && input$boxplot_delta_mode == "pooled")) {
             ggplotly(p, tooltip = "text") %>% layout(boxmode = "group")
           } else {
-            ggplotly(p, tooltip = c("group", response_vars))
+            ggplotly(p, tooltip = c("group", response_var))
           }
         } else {
           p
@@ -1397,7 +1397,6 @@ visualization_qm_ldm_server <- function(id, rv) {
         })
       }
     )
-    
     
     observeEvent(input$plot_type, {
       if (input$plot_type == "boxplot_delta") {

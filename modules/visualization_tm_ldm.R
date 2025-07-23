@@ -118,6 +118,8 @@ visualization_tm_ldm_ui <- function(id) {
                       choices = c("seconds", "minutes", "hours", "days"), selected = "minutes")
         ),
         uiOutput(ns("aggregation_period_label")),
+        selectInput(ns("lineplot_replicate_mode"), "Lineplot Mode",
+                    choices = c("pooled", "separated"), selected = "pooled"),
         actionButton(ns("generate_lineplot_dfs"), "Generate Lineplot Datasets"),
         div(style = "margin-bottom: 30px;"),
         selectInput(ns("response_var"), "Response Variable",
@@ -1230,7 +1232,6 @@ visualization_tm_ldm_server <- function(id, rv) {
         })
       }
     )
-    
     
     observeEvent(input$plot_type, {
       if (input$plot_type == "boxplot_delta") {

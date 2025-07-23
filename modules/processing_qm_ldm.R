@@ -2,42 +2,46 @@
 processing_qm_ldm_ui <- function(id) {
   ns <- NS(id)
   
-  fluidRow(
-    box(
-      title = "Match Raw Data to Plate Plans (Quantization Mode, Light-Dark Mode)",
-      width = 5,
-      h4("Associate Raw Data with Plate Plans"),
-      uiOutput(ns("file_plate_selectors")),
-      div(style = "margin-bottom: 10px;"),
-      actionButton(ns("confirm_mapping"), "Confirm Mapping"),
-      div(style = "margin-bottom: 20px;"),
-      
-      h4("Additional Processing Parameters"),
-      fileInput(ns("period_file"), "Upload Period Transitions File (Excel)", accept = c(".xlsx")),
-      fileInput(ns("removal_file"), "Upload Removal Specifications File (Excel)", accept = c(".xlsx")),
-      div(style = "margin-bottom: 10px;"),
-      actionButton(ns("run_processing"), "Run Full Processing")
+  tagList(
+    fluidRow(
+      box(
+        title = "Match Raw Data to Plate Plans (Quantization Mode, Light-Dark Mode)",
+        width = 12,
+        h4("Associate Raw Data with Plate Plans"),
+        uiOutput(ns("file_plate_selectors")),
+        div(style = "margin-bottom: 10px;"),
+        actionButton(ns("confirm_mapping"), "Confirm Mapping"),
+        div(style = "margin-bottom: 20px;"),
+        
+        h4("Additional Processing Parameters"),
+        fileInput(ns("period_file"), "Upload Period Transitions File (Excel)", accept = c(".xlsx")),
+        fileInput(ns("removal_file"), "Upload Removal Specifications File (Excel)", accept = c(".xlsx")),
+        div(style = "margin-bottom: 10px;"),
+        actionButton(ns("run_processing"), "Run Full Processing")
+      )
     ),
-    box(
-      title = "Processing Results",
-      width = 7,
-      
-      # Clear Console button
-      div(style = "margin-bottom: 10px;",
-          actionButton(ns("clear_console"), "Clear Console", icon = icon("trash"))),
-      
-      tabsetPanel(
-        tabPanel("Console Output", 
-                 div(
-                   style = "background-color: #f5f5f5; border: 1px solid #ccc; padding: 10px; height: 600px; overflow-y: auto; font-family: monospace;",
-                   uiOutput(ns("console_output"))
-                 )
-        ),
-        tabPanel("Processed Data",
-                 uiOutput(ns("tables_with_periods")),
-                 div(style = "margin-top:10px;",
-                     downloadButton(ns("download_all_results"), "Download all results (.zip)"))),
-        tabPanel("Boundary Associations", DT::dataTableOutput(ns("boundary_associations_table")))
+    fluidRow(
+      box(
+        title = "Processing Results",
+        width = 12,
+        
+        # Clear Console button
+        div(style = "margin-bottom: 10px;",
+            actionButton(ns("clear_console"), "Clear Console", icon = icon("trash"))),
+        
+        tabsetPanel(
+          tabPanel("Console Output", 
+                   div(
+                     style = "border: 1px solid #ccc; padding: 10px; height: 800px; overflow-y: auto; font-family: monospace;",
+                     uiOutput(ns("console_output"))
+                   )
+          ),
+          tabPanel("Processed Data",
+                   uiOutput(ns("tables_with_periods")),
+                   div(style = "margin-top:10px;",
+                       downloadButton(ns("download_all_results"), "Download all results (.zip)"))),
+          tabPanel("Boundary Associations", DT::dataTableOutput(ns("boundary_associations_table")))
+        )
       )
     )
   )
