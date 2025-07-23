@@ -1,4 +1,6 @@
-# server.R
+library(shiny)
+library(shinydashboard)
+library(shinyjs)
 
 server <- function(input, output, session) {
   # Valeurs réactives globales
@@ -101,6 +103,7 @@ server <- function(input, output, session) {
     }
   })
   
+  # Gestion du bouton Exit
   observeEvent(input$exit_app, {
     stopApp()
   })

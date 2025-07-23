@@ -1,78 +1,94 @@
-# ui.R
+library(shiny)
+library(shinydashboard)
+library(shinyjs)
+library(fresh)
 
-# ── Consolidated CSS and JavaScript ───────────────────────────────────────────
+# ── Définition du thème de base (clair) ─────────────────────────────────────
+base_theme <- create_theme(
+  theme = "default",
+  bs_vars_global(
+    body_bg = "#FFF",           # Fond clair par défaut
+    text_color = "#000"         # Texte noir
+  ),
+  bs_vars_wells(
+    bg = "#F8F9FA",             # Fond des panneaux
+    border = "#DEE2E6"          # Bordure des panneaux
+  ),
+  bs_vars_button(
+    default_bg = "#2196F3",     # Couleur des boutons
+    default_color = "#FFF",     # Texte blanc
+    default_border = "#2196F3"  # Bordure bleue
+  )
+)
+
+# ── Styles CSS personnalisés et JavaScript pour le toggle ───────────────────
 header_styles <- tags$head(
   tags$style(HTML('
-    .switch {
-      position: relative;
-      display: inline-block;
-      width: 50px;
-      height: 28px;
-    }
-    .switch input {
-      opacity: 0;
-      width: 0;
-      height: 0;
-    }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 24px;
-    }
-    .slider:before {
-      position: absolute;
-      content: "";
-      height: 20px;
-      width: 20px;
-      left: 4px;
-      bottom: 4px;
-      background-color: white;
-      transition: .4s;
-      border-radius: 50%;
-    }
-    input:checked + .slider {
-      background-color: #2196F3;
-    }
-    input:checked + .slider:before {
-      transform: translateX(22px);
-    }
-    .exit-button {
-      background-color: #a31f15;
-      color: #fff;
-      border: none;
-      margin-top: 8px;
-      margin-right: 10px;
-      padding: 6px 12px;
-      font-weight: bold;
-      border-radius: 10px;
-    }
-    .theme-toggle {
-      margin-top: 11px;
-      margin-right: 10px;
-      display: inline-flex;
-      align-items: center;
-    }
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #2196F3; }
+    input:checked + .slider:before { transform: translateX(22px); }
+    .exit-button { background-color: #a31f15; color: #fff; border: none; margin: 8px 10px 0 0; padding: 6px 12px; font-weight: bold; border-radius: 10px; }
+
+    /* Thème clair (par défaut) */
+    .main-header { background-color: #FFF !important; color: #000 !important; }
+    .main-sidebar { background-color: #F8F9FA !important; color: #000 !important; }
+    .main-sidebar .sidebar-menu li a { color: #000 !important; }
+    .main-sidebar .sidebar-menu li.active a { color: #000 !important; background-color: #E0E0E0 !important; }
+    .main-sidebar .sidebar-menu li a:hover { background-color: #2196F3 !important; color: #FFF !important; }
+    .content-wrapper { background-color: #FFF !important; }
+    .box { border-radius: 15px !important; background-color: #FFF !important; border: 2px solid #DEE2E6 !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important; }
+    .box .nav-tabs { background-color: transparent !important; border-bottom: 2px solid #DEE2E6 !important; border-radius: 10px 10px 0 0 !important; }
+    .box .nav-tabs li a { color: #000 !important; background-color: transparent !important; border: none !important; padding: 10px 20px !important; border-radius: 10px 10px 0 0 !important; }
+    .box .nav-tabs li a:hover, .box .nav-tabs li.active a { background-color: #2196F3 !important; color: #FFF !important; border-bottom: none !important; }
+    .box .tab-content { background-color: #F8F9FA !important; border-radius: 0 0 15px 15px !important; padding: 15px !important; }
+    .well { background-color: #F8F9FA !important; border: 1px solid #DEE2E6 !important; }
+
+    /* Thème sombre */
+    [data-theme="dark"] .main-header { background-color: #222d32 !important; color: #FFF !important; }
+    [data-theme="dark"] .main-sidebar { background-color: #222d32 !important; color: #FFF !important; }
+    [data-theme="dark"] .main-sidebar .sidebar-menu li a { color: #FFF !important; }
+    [data-theme="dark"] .main-sidebar .sidebar-menu li.active a { color: #FFF !important; background-color: #1a2226 !important; }
+    [data-theme="dark"] .main-sidebar .sidebar-menu li a:hover { background-color: #2196F3 !important; color: #FFF !important; }
+    [data-theme="dark"] .content-wrapper { background-color: #2E2E2E !important; }
+    [data-theme="dark"] .box { background-color: #2E2E2E !important; border: 2px solid #444 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; }
+    [data-theme="dark"] .box .nav-tabs { border-bottom-color: #444 !important; }
+    [data-theme="dark"] .box .nav.nav-tabs li a { color: #FFF !important; }
+    [data-theme="dark"] .box .nav.nav-tabs li a:hover, [data-theme="dark"] .box .nav.nav-tabs li.active a { background-color: #2196F3 !important; color: #FFF !important; border-bottom: none !important; }
+    [data-theme="dark"] .box .tab-content { background-color: #2E2E2E !important; }
+    [data-theme="dark"] .box > .box-header { color: #FFF !important; border-bottom: 1px solid #444 !important; }
+    [data-theme="dark"] { color: #FFF !important; }
+    [data-theme="dark"] .well { background-color: #444 !important; border-color: #666 !important; color: #FFF !important; }
+
+    /* Styles spécifiques pour DT::datatable en thème sombre */
+    [data-theme="dark"] .dataTables_wrapper { background-color: #2E2E2E !important; color: #FFF !important; }
+    [data-theme="dark"] .dataTables_wrapper table { background-color: #2E2E2E !important; color: #FFF !important; }
+    [data-theme="dark"] .dataTables_wrapper .dataTable th, [data-theme="dark"] .dataTables_wrapper .dataTable td { color: #FFF !important; border-color: #444 !important; }
+    [data-theme="dark"] .dataTables_wrapper .dataTables_filter input, [data-theme="dark"] .dataTables_wrapper .dataTables_length select { background-color: #444 !important; color: #FFF !important; border: 1px solid #666 !important; }
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button { background-color: #444 !important; color: #FFF !important; }
+    [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background-color: #2196F3 !important; color: #FFF !important; }
+
+    /* Styles spécifiques pour plotly en thème sombre */
+    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container { background-color: #2E2E2E !important; color: #FFF !important; }
+    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container .svg-container { background-color: #2E2E2E !important; }
+    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container text { fill: #FFF !important; }
+    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container .cartesianlayer .trace { color: #FFF !important; }
   ')),
   tags$script(HTML('
     function toggleTheme() {
       var body = document.body;
-      var isDark = body.getAttribute("data-bs-theme") === "dark";
-      body.setAttribute("data-bs-theme", isDark ? "light" : "dark");
-      var sidebar = document.getElementsByClassName("sidebar")[0];
-      if (sidebar) {
-        sidebar.style.backgroundColor = isDark ? "#222d32" : "#343a40";
-}
-}
-'))
+      var isDark = body.getAttribute("data-theme") === "dark";
+      body.setAttribute("data-theme", isDark ? "light" : "dark");
+      if (window.Shiny) {
+        Shiny.setInputValue("themeChanged", !isDark);
+      }
+    }
+  '))
 )
 
-# ── Dashboard Header Components ─────────────────────────────────────────────
+# ─ Dashboard Header avec toggle ────────────────────────────────────────────
 header_items <- dashboardHeader(
   title = "Zebrabox Treatment",
   tags$li(
@@ -85,7 +101,11 @@ header_items <- dashboardHeader(
           id = "themeToggle",
           onclick = "toggleTheme()"
         ),
-        tags$span(class = "slider")
+        tags$span(class = "slider"),
+        tags$span(
+          style = "margin-left: 10px;",
+          icon("sun", class = "fa-lg")
+        )
       )
     ),
     class = "dropdown"
@@ -147,6 +167,7 @@ welcome_content <- tabItem(
 
 # ── Dashboard Body ──────────────────────────────────────────────────────────
 dashboard_body <- dashboardBody(
+  use_theme(base_theme), # Appliquer le thème de base (clair)
   header_styles,
   tabItems(
     welcome_content,
@@ -162,6 +183,5 @@ dashboardPage(
   header = header_items,
   sidebar = sidebar_content,
   body = dashboard_body,
-  skin = "red"
+  skin = "black"
 )
-
