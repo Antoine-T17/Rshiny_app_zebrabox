@@ -35,11 +35,16 @@ header_styles <- tags$head(
     /* Thème clair (par défaut) */
     .main-header { background-color: #FFF !important; color: #000 !important; }
     .main-sidebar { background-color: #F8F9FA !important; color: #000 !important; }
-    .main-sidebar .sidebar-menu li a { color: #000 !important; }
+    .main-sidebar .sidebar-menu li a { color: #000 !important; transition: transform 0.3s ease, box-shadow 0.3s ease !important; }
     .main-sidebar .sidebar-menu li.active a { color: #000 !important; background-color: #E0E0E0 !important; }
-    .main-sidebar .sidebar-menu li a:hover { background-color: #2196F3 !important; color: #FFF !important; }
+    .main-sidebar .sidebar-menu li a:hover { background-color: #2196F3 !important; color: #FFF !important; transform: translateY(-3px) !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important; }
     .content-wrapper { background-color: #FFF !important; }
-    .box { border-radius: 15px !important; background-color: #FFF !important; border: 2px solid #DEE2E6 !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important; }
+    .box { border-radius: 15px !important; background-color: #FFF !important; border: 2px solid #DEE2E6 !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important; transition: transform 0.3s ease, box-shadow 0.3s ease !important; padding: 15px !important; }
+    .box:hover { transform: translateY(-5px) !important; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2) !important; }
+    .box:hover i { transform: scale(1.2) !important; transition: transform 0.5s ease !important; } /* Grossissement au hover */
+    .box i { transition: transform 0.5s ease !important; } /* Transition pour retour à la taille initiale */
+    .box .details { display: none; font-size: 0.95em; color: #555; margin-top: 1em; } /* Détails cachés par défaut */
+    .box:hover .details { display: block; } /* Affichage au hover */
     .box .nav-tabs { background-color: transparent !important; border-bottom: 2px solid #DEE2E6 !important; border-radius: 10px 10px 0 0 !important; }
     .box .nav-tabs li a { color: #000 !important; background-color: transparent !important; border: none !important; padding: 10px 20px !important; border-radius: 10px 10px 0 0 !important; }
     .box .nav-tabs li a:hover, .box .nav-tabs li.active a { background-color: #2196F3 !important; color: #FFF !important; border-bottom: none !important; }
@@ -49,11 +54,16 @@ header_styles <- tags$head(
     /* Thème sombre */
     [data-theme="dark"] .main-header { background-color: #222d32 !important; color: #FFF !important; }
     [data-theme="dark"] .main-sidebar { background-color: #222d32 !important; color: #FFF !important; }
-    [data-theme="dark"] .main-sidebar .sidebar-menu li a { color: #FFF !important; }
+    [data-theme="dark"] .main-sidebar .sidebar-menu li a { color: #FFF !important; transition: transform 0.3s ease, box-shadow 0.3s ease !important; }
     [data-theme="dark"] .main-sidebar .sidebar-menu li.active a { color: #FFF !important; background-color: #1a2226 !important; }
-    [data-theme="dark"] .main-sidebar .sidebar-menu li a:hover { background-color: #2196F3 !important; color: #FFF !important; }
+    [data-theme="dark"] .main-sidebar .sidebar-menu li a:hover { background-color: #2196F3 !important; color: #FFF !important; transform: translateY(-3px) !important; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important; }
     [data-theme="dark"] .content-wrapper { background-color: #2E2E2E !important; }
-    [data-theme="dark"] .box { background-color: #2E2E2E !important; border: 2px solid #444 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; }
+    [data-theme="dark"] .box { background-color: #2E2E2E !important; border: 2px solid #444 !important; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important; transition: transform 0.3s ease, box-shadow 0.3s ease !important; padding: 15px !important; }
+    [data-theme="dark"] .box:hover { transform: translateY(-5px) !important; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6) !important; }
+    [data-theme="dark"] .box:hover i { transform: scale(1.2) !important; transition: transform 0.5s ease !important; }
+    [data-theme="dark"] .box i { transition: transform 0.5s ease !important; }
+    [data-theme="dark"] .box .details { display: none; font-size: 0.95em; color: #BBB; margin-top: 1em; }
+    [data-theme="dark"] .box:hover .details { display: block; }
     [data-theme="dark"] .box .nav-tabs { border-bottom-color: #444 !important; }
     [data-theme="dark"] .box .nav.nav-tabs li a { color: #FFF !important; }
     [data-theme="dark"] .box .nav.nav-tabs li a:hover, [data-theme="dark"] .box .nav.nav-tabs li.active a { background-color: #2196F3 !important; color: #FFF !important; border-bottom: none !important; }
@@ -75,6 +85,13 @@ header_styles <- tags$head(
     [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container .svg-container { background-color: #2E2E2E !important; }
     [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container text { fill: #FFF !important; }
     [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container .cartesianlayer .trace { color: #FFF !important; }
+
+    /* Animation underline pour titre principal (effet serpent glissant) */
+    .welcome-title { position: relative; display: inline-block; text-align: center; font-size: 3em; color: #2196F3; margin-bottom: 0.5em; overflow: hidden; }
+    .welcome-title::after { content: ""; position: absolute; left: -20%; bottom: -5px; width: 20%; height: 3px; background-color: #2196F3; animation: snake 4s ease-in-out infinite; }
+    @keyframes snake { 0% { left: -20%; } 100% { left: 100%; } } /* Glisse de gauche à droite et reset */
+    [data-theme="dark"] .welcome-title { color: #2196F3; }
+    [data-theme="dark"] .welcome-title::after { background-color: #2196F3; }
   ')),
   tags$script(HTML('
     function toggleTheme() {
@@ -136,32 +153,66 @@ sidebar_content <- dashboardSidebar(
 # ── Welcome Tab Content ─────────────────────────────────────────────────────
 welcome_content <- tabItem(
   tabName = "welcome",
-  h2(
-    "Welcome to Zebrabox Experiment Pipeline",
-    style = "font-size: 2em; margin-bottom: 0.8em;"
+  fluidRow(
+    column(width = 12, align = "center",
+           h1("Welcome to Zebrabox Experiment Pipeline", class = "welcome-title"),
+           p(
+             "This application lets you create randomize assignment conditions plate plans, import and process raw data, and visualize results in various modes.",
+             style = "font-size: 1.4em; line-height: 1.6; margin-bottom: 2em; text-align: center; font-style: italic;"
+           )
+    )
   ),
-  p(
-    "This application lets you create randomize assignment conditions plate plans, import and process raw data, and visualize results in various modes.",
-    style = "font-size: 1.2em; line-height: 1.6; margin-bottom: 1.2em;"
-  ),
-  tags$ul(
-    style = "font-size: 1.1em; line-height: 1.6; margin-left: 1.5em; margin-bottom: 1.5em;",
-    tags$li(strong("Plate Plan:"), " Create or upload .xlsx plate layouts, preview them, and download as .xlsx."),
-    tags$li(strong("Raw Data:"), " Import and view raw Zebrabox outputs (.xlsx)."),
-    tags$li(
-      style = "margin-left: 1em;",
-      tags$u("Primary mode:"), " Tracking or Quantization"
+  fluidRow(
+    column(width = 3,
+           box(
+             width = NULL, status = "primary",
+             div(style = "text-align: center; margin-bottom: 1em;", icon("table", class = "fa-3x")),
+             h4(strong("PLATE PLAN"), style = "text-align: center; text-transform: uppercase; margin-bottom: 1.5em;"),
+             p("Import or generate randomized .xlsx plate layouts to minimize edge effects from well positioning.", style = "text-align: justify; font-size: 1em; line-height: 1.5;"),
+             div(class = "details",
+                 p("Randomization helps avoid camera overestimation due to reflections in border wells. Exclude borders if needed, create multiple plates with equitable condition distribution, and preview as tables or figures.")
+             )
+           )
     ),
-    tags$li(
-      style = "margin-left: 1em;",
-      tags$u("Secondary mode:"), " Light/Dark tests or Vibration tests"
+    column(width = 3,
+           box(
+             width = NULL, status = "primary",
+             div(style = "text-align: center; margin-bottom: 1em;", icon("file-import", class = "fa-3x")),
+             h4(strong("RAW DATA"), style = "text-align: center; text-transform: uppercase; margin-bottom: 1.5em;"),
+             p("Import Zebrabox outputs in .xlsx (convert from .xls). Select primary mode (Tracking or Quantization) and secondary mode (Light/Dark or Vibration/Rest).", style = "text-align: justify; font-size: 1em; line-height: 1.5;"),
+             div(class = "details",
+                 p("Tracking follows exact movements of organisms (e.g., one per well, multi-animal support). Quantization measures pixel changes for activity (e.g., Δ pixels above threshold). Light/Dark tests light responses; Vibration/Rest assesses sound/vibration reactions."),
+                 p("For details, see the ", tags$a(href = "https://www.viewpoint.fr/upload/productBrochurePdf/catalogueaqua-compressed-6373a62793a3e038651827.pdf", "Zebrabox brochure", target = "_blank"), " or visit the ", tags$a(href = "https://www.viewpoint.fr/product/zebrafish/fish-behavior-monitoring/zebrabox", "official website", target = "_blank"), ".")
+             )
+           )
     ),
-    tags$li(strong("Processing:"), " Match raw data with plate plans, upload two Excel templates, view history in Console Output, and download cleaned datasets as .xlsx in Processed Data."),
-    tags$li(strong("Visualization:"), " Generate customizable charts (light/dark theme), labels, and colors. Export as .png or interactive .html.")
+    column(width = 3,
+           box(
+             width = NULL, status = "primary",
+             div(style = "text-align: center; margin-bottom: 1em;", icon("gears", class = "fa-3x")),
+             h4(strong("PROCESSING"), style = "text-align: center; text-transform: uppercase; margin-bottom: 1.5em;"),
+             p("Confirm plate assignments with raw data, then upload Transition and Removal .xlsx templates for event timing and exclusions.", style = "text-align: justify; font-size: 1em; line-height: 1.5;"),
+             div(class = "details",
+                 p("Transition captures time codes (e.g., light/vibration events); Removal excludes times, wells, periods, or conditions. Output cleaned datasets as .xlsx, with console history.")
+             )
+           )
+    ),
+    column(width = 3,
+           box(
+             width = NULL, status = "primary",
+             div(style = "text-align: center; margin-bottom: 1em;", icon("chart-line", class = "fa-3x")),
+             h4(strong("VISUALIZATION"), style = "text-align: center; text-transform: uppercase; margin-bottom: 1.5em;"),
+             p("Generate dataframes from processed data and create customizable charts with themes, labels, and colors.", style = "text-align: justify; font-size: 1em; line-height: 1.5;"),
+             div(class = "details",
+                 p("Export as .png or interactive .html for detailed hovering and exploration.")
+             )
+           )
+    )
   ),
-  p(
-    "Use the menu on the left to navigate.",
-    style = "font-size: 1.1em; margin-top: 1.5em;"
+  fluidRow(
+    column(width = 12, align = "center",
+           p("Use the menu on the left to navigate.", style = "font-size: 1.2em; margin-top: 2em; font-style: italic;")
+    )
   )
 )
 

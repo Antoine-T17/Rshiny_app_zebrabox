@@ -83,7 +83,7 @@ raw_data_server <- function(id, rv) {
     
     # ---- Options communes pour DataTable ----
     dt_options <- list(
-      pageLength = 100,
+      pageLength = 25,
       autoWidth = TRUE,
       orderClasses = TRUE,
       scrollX = TRUE
