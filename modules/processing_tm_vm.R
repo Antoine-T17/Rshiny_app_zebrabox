@@ -383,8 +383,8 @@ processing_tm_vm_server <- function(id, rv) {
         
         add_console_message("🔄 Starting data extraction, enrichment, and period assignment...")
         
-        Processed_Data_list <- list()
-        Boundary_Associations_list <- list()
+        processed_data_list <- list()
+        boundary_associations_list <- list()
         
         num_cols_to_convert <- c("inact", "inadur", "inadist", "smlct", "smldist", "smldur", "larct", "lardur", "lardist", "emptyct", "emptydur", "period")
         
@@ -443,15 +443,15 @@ processing_tm_vm_server <- function(id, rv) {
           
           zone_combined <- process_zones(current_data, i)
           
-          Processed_Data_list[[i]] <- zone_combined
-          Boundary_Associations_list[[i]] <- data.frame(time_switch = boundaries, transition = transitions)
+          processed_data_list[[i]] <- zone_combined
+          boundary_associations_list[[i]] <- data.frame(time_switch = boundaries, transition = transitions)
         }
         
         add_console_message("\n ✅ Data extraction, enrichment, and period assignment completed for all plates!")
         
         rv$processing_results <- list(
-          Processed_Data_list = Processed_Data_list,
-          Boundary_Associations_list = Boundary_Associations_list
+          processed_data_list = processed_data_list,
+          boundary_associations_list = boundary_associations_list
         )
         
         add_console_message("✅ Results stored in rv$processing_results.")
@@ -464,7 +464,7 @@ processing_tm_vm_server <- function(id, rv) {
     
     output$tables_with_periods <- renderUI({
       req(rv$processing_results)
-      dfs <- rv$processing_results$Processed_Data_list
+      dfs <- rv$processing_results$processed_data_list
       if (length(dfs) == 0) return(NULL)
       
       tabs <- lapply(seq_along(dfs), function(i) {
@@ -484,7 +484,7 @@ processing_tm_vm_server <- function(id, rv) {
     
     observe({
       req(rv$processing_results)
-      dfs <- rv$processing_results$Processed_Data_list
+      dfs <- rv$processing_results$processed_data_list
       
       lapply(seq_along(dfs), function(i) {
         local({
@@ -509,7 +509,7 @@ processing_tm_vm_server <- function(id, rv) {
     
     output$boundary_associations_table <- DT::renderDataTable({
       req(rv$processing_results)
-      dbl <- rv$processing_results$Boundary_Associations_list
+      dbl <- rv$processing_results$boundary_associations_list
       if (length(dbl) == 0) return(NULL)
       
       combined <- dplyr::bind_rows(dbl) %>% dplyr::distinct()
@@ -524,13 +524,13 @@ processing_tm_vm_server <- function(id, rv) {
         temp_dir <- tempdir()
         files_to_zip <- c()
         
-        if (length(rv$processing_results$Processed_Data_list) > 0) {
-          writexl::write_xlsx(dplyr::bind_rows(rv$processing_results$Processed_Data_list), file.path(temp_dir, "processed_data.xlsx"))
+        if (length(rv$processing_results$processed_data_list) > 0) {
+          writexl::write_xlsx(dplyr::bind_rows(rv$processing_results$processed_data_list), file.path(temp_dir, "processed_data.xlsx"))
           files_to_zip <- c(files_to_zip, file.path(temp_dir, "processed_data.xlsx"))
         }
         
-        if (length(rv$processing_results$Boundary_Associations_list) > 0) {
-          boundary_df <- dplyr::bind_rows(rv$processing_results$Boundary_Associations_list) %>% dplyr::distinct()
+        if (length(rv$processing_results$boundary_associations_list) > 0) {
+          boundary_df <- dplyr::bind_rows(rv$processing_results$boundary_associations_list) %>% dplyr::distinct()
           writexl::write_xlsx(boundary_df, file.path(temp_dir, "boundary_associations.xlsx"))
           files_to_zip <- c(files_to_zip, file.path(temp_dir, "boundary_associations.xlsx"))
         }
