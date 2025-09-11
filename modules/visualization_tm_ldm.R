@@ -1,104 +1,95 @@
-# Themes
+# ==== Constants & Themes =====================================================
+
+RESPONSE_VARS   <- c("totaldist","totaldur","totalct","totalspeed",
+                     "lardist","lardur","larct","larspeed",
+                     "smldist","smldur","smlct","smlspeed",
+                     "inadist","inadur","inact","emptydur","emptyct")
+response_choices <- c("", RESPONSE_VARS)
+
 light_theme <- function(base_size = 11, base_family = "") {
   theme_bw(base_size = base_size, base_family = base_family) %+replace% theme(
-    plot.title = element_text(color = "black", size = 14, hjust = 0.5),
-    axis.text.y = element_text(color = "black", size = 12),
-    axis.text.x = element_text(color = "black", size = 12),
-    axis.title.x = element_text(color = "black", size = 12, margin = margin(t = 5, r = 15)),
-    axis.title.y = element_text(color = "black", size = 12, angle = 90, margin = margin(r = 10)),
-    legend.position = "right",
-    legend.text = element_text(color = "black", size = 12, face = "italic"),
+    plot.title   = element_text(color="black", size=14, hjust=.5),
+    axis.text    = element_text(color="black", size=12),
+    axis.title.x = element_text(color="black", size=12, margin=margin(t=5, r=15)),
+    axis.title.y = element_text(color="black", size=12, angle=90, margin=margin(r=10)),
+    legend.position="right",
+    legend.text  = element_text(color="black", size=12, face="italic"),
     legend.title = element_blank(),
-    strip.text.x = element_text(size = 12),
-    strip.background = element_rect(fill = "white"),
-    plot.caption = element_text(color = "black", size = 8, hjust = 1, margin = margin(t = 10))
+    strip.text.x = element_text(size=12),
+    strip.background = element_rect(fill="white"),
+    plot.caption = element_text(color="black", size=8, hjust=1, margin=margin(t=10))
   )
 }
 
 dark_theme <- function(base_size = 11, base_family = "") {
   theme_bw(base_size = base_size, base_family = base_family) %+replace% theme(
-    plot.title = element_text(color = "white", size = 14, hjust = 0.5),
-    axis.text.y = element_text(color = "white", size = 12),
-    axis.text.x = element_text(color = "white", size = 12),
-    axis.title.x = element_text(color = "white", size = 12, margin = margin(t = 5, r = 15)),
-    axis.title.y = element_text(color = "white", size = 12, angle = 90, margin = margin(r = 10)),
-    legend.position = "right",
-    legend.text = element_text(color = "white", size = 12, face = "italic"),
+    plot.title   = element_text(color="white", size=14, hjust=.5),
+    axis.text    = element_text(color="white", size=12),
+    axis.title.x = element_text(color="white", size=12, margin=margin(t=5, r=15)),
+    axis.title.y = element_text(color="white", size=12, angle=90, margin=margin(r=10)),
+    legend.position="right",
+    legend.text  = element_text(color="white", size=12, face="italic"),
     legend.title = element_blank(),
-    legend.background = element_rect(fill = "black"),
-    legend.key = element_rect(fill = "black"),
-    strip.text.x = element_text(color = "white", size = 12),
-    strip.background = element_rect(fill = "black", color = "white"),
-    plot.background = element_rect(fill = "black"),
-    panel.background = element_rect(fill = "black"),
-    panel.border = element_rect(color = "white", fill = NA),
-    panel.grid.major = element_line(color = "grey30"),
-    panel.grid.minor = element_line(color = "grey30"),
-    plot.caption = element_text(color = "white", size = 8, hjust = 1, margin = margin(t = 10))
+    legend.background = element_rect(fill="black"),
+    legend.key        = element_rect(fill="black"),
+    strip.text.x      = element_text(color="white", size=12),
+    strip.background  = element_rect(fill="black", color="white"),
+    plot.background   = element_rect(fill="black"),
+    panel.background  = element_rect(fill="black"),
+    panel.border      = element_rect(color="white", fill=NA),
+    panel.grid.major  = element_line(color="grey30"),
+    panel.grid.minor  = element_line(color="grey30"),
+    plot.caption      = element_text(color="white", size=8, hjust=1, margin=margin(t=10))
   )
 }
 
-# UI for Visualization Module, Light-Dark Mode
+# ==== UI =====================================================================
+
 visualization_tm_ldm_ui <- function(id) {
   ns <- NS(id)
+  cond <- function(x, y) paste0("input['", ns(x), "'] == '", y, "'")
+  
   fluidRow(
     box(
-      title = "Visualization Inputs",
-      width = 4,
+      title = "Visualization Inputs", width = 4,
       selectInput(ns("plot_type"), "Plot Type",
-                  choices = c("boxplot_light_dark", "boxplot_cumulate", "boxplot_delta", "lineplot"), 
+                  c("boxplot_light_dark","boxplot_cumulate","boxplot_delta","lineplot"),
                   selected = "boxplot_light_dark"),
-      div(style = "margin-bottom: 20px;"),
+      div(style="margin-bottom:20px;"),
       
       # --- BOXPLOT LIGHT/DARK ---
       conditionalPanel(
-        condition = sprintf("input['%s'] == 'boxplot_light_dark'", ns("plot_type")),
+        condition = cond("plot_type","boxplot_light_dark"),
         actionButton(ns("generate_light_dark_dfs"), "Generate Light/Dark Datasets"),
-        div(style = "margin-bottom: 30px;"),
-        # Response Variable juste après Generate
-        selectInput(ns("response_var"), "Response Variable",
-                    choices = c("", "totaldist", "totaldur", "totalct", "totalspeed",
-                                "lardist", "lardur", "larct", "larspeed",
-                                "smldist", "smldur", "smlct", "smlspeed",
-                                "inadist", "inadur", "inact", "emptydur", "emptyct"),
-                    selected = ""),
-        selectInput(ns("boxplot_light_dark_mode"), "Boxplot Mode",
-                    choices = c("separated", "pooled"), selected = "separated")
+        div(style="margin-bottom:30px;"),
+        selectInput(ns("response_var"), "Response Variable", response_choices, selected = ""),
+        selectInput(ns("boxplot_light_dark_mode"), "Boxplot Mode", c("separated","pooled"), "separated"),
+        conditionalPanel(
+          condition = paste(cond("boxplot_light_dark_mode","pooled"), "&&", cond("plot_type","boxplot_light_dark")),
+          textInput(ns("boxplot_light_dark_periods_colors"),
+                    "Light/Dark Colors (comma-separated hex)", value = "#FFC300,#B3AAAA")
+        )
       ),
       
       # --- BOXPLOT CUMULATE ---
       conditionalPanel(
-        condition = sprintf("input['%s'] == 'boxplot_cumulate'", ns("plot_type")),
+        condition = cond("plot_type","boxplot_cumulate"),
         actionButton(ns("generate_cumulate_dfs"), "Generate Cumulative Datasets"),
-        div(style = "margin-bottom: 30px;"),
-        selectInput(ns("response_var"), "Response Variable",
-                    choices = c("", "totaldist", "totaldur", "totalct", "totalspeed",
-                                "lardist", "lardur", "larct", "larspeed",
-                                "smldist", "smldur", "smlct", "smlspeed",
-                                "inadist", "inadur", "inact", "emptydur", "emptyct"),
-                    selected = "")
+        div(style="margin-bottom:30px;"),
+        selectInput(ns("response_var"), "Response Variable", response_choices, selected = "")
       ),
       
       # --- BOXPLOT DELTA ---
       conditionalPanel(
-        condition = sprintf("input['%s'] == 'boxplot_delta'", ns("plot_type")),
+        condition = cond("plot_type","boxplot_delta"),
         uiOutput(ns("transition_select_ui")),
-        textInput(ns("delta_time"), "Delta Time Window (seconds)", value = "60",
-                  placeholder = "Enter time window in seconds"),
+        textInput(ns("delta_time"), "Delta Time Window (seconds)", value = "60"),
         actionButton(ns("generate_delta_dfs"), "Generate Delta Datasets"),
-        div(style = "margin-bottom: 30px;"),
-        # Response Variable juste après Generate
-        selectInput(ns("response_var"), "Response Variable",
-                    choices = c("", "totaldist", "totaldur", "totalct", "totalspeed",
-                                "lardist", "lardur", "larct", "larspeed",
-                                "smldist", "smldur", "smlct", "smlspeed",
-                                "inadist", "inadur", "inact", "emptydur", "emptyct"),
-                    selected = ""),
-        selectInput(ns("boxplot_delta_mode"), "Boxplot Mode",
-                    choices = c("separated", "pooled"), selected = "separated"),
+        div(style="margin-bottom:30px;"),
+        selectInput(ns("response_var"), "Response Variable", response_choices, selected = ""),
+        selectInput(ns("boxplot_delta_mode"), "Boxplot Mode", c("separated","pooled"), "separated"),
         conditionalPanel(
-          condition = sprintf("input['%s'] == 'pooled' && input['%s'] == 'boxplot_delta'",
-                              ns("boxplot_delta_mode"), ns("plot_type")),
+          condition = paste(cond("boxplot_delta_mode","pooled"), "&&", cond("plot_type","boxplot_delta")),
           textInput(ns("boxplot_delta_phase_colors"),
                     "Phase Colors (Before, Switch, After; comma-separated hex)",
                     value = "#FF6F61, #40C4FF, #4CAF50")
@@ -107,1509 +98,735 @@ visualization_tm_ldm_ui <- function(id) {
       
       # --- LINEPLOT ---
       conditionalPanel(
-        condition = sprintf("input['%s'] == 'lineplot'", ns("plot_type")),
+        condition = cond("plot_type","lineplot"),
         selectInput(ns("time_unit_original"), "Original Time Unit",
-                    choices = c("seconds", "minutes", "hours", "days"), selected = "seconds"),
-        selectInput(ns("time_unit_convert"), "Convert Time Unit?",
-                    choices = c("No", "Yes"), selected = "No"),
+                    c("seconds","minutes","hours","days"), "seconds"),
+        selectInput(ns("time_unit_convert"), "Convert Time Unit?", c("No","Yes"), "No"),
         conditionalPanel(
-          condition = sprintf("input['%s'] == 'Yes'", ns("time_unit_convert")),
+          condition = cond("time_unit_convert","Yes"),
           selectInput(ns("time_unit_target"), "Target Time Unit",
-                      choices = c("seconds", "minutes", "hours", "days"), selected = "minutes")
+                      c("seconds","minutes","hours","days"), "minutes")
         ),
         uiOutput(ns("aggregation_period_label")),
-        selectInput(ns("lineplot_replicate_mode"), "Lineplot Mode",
-                    choices = c("pooled", "separated"), selected = "pooled"),
+        selectInput(ns("lineplot_replicate_mode"), "Lineplot Mode", c("pooled","separated"), "pooled"),
         actionButton(ns("generate_lineplot_dfs"), "Generate Lineplot Datasets"),
-        div(style = "margin-bottom: 30px;"),
-        selectInput(ns("response_var"), "Response Variable",
-                    choices = c("", "totaldist", "totaldur", "totalct", "totalspeed",
-                                "lardist", "lardur", "larct", "larspeed",
-                                "smldist", "smldur", "smlct", "smlspeed",
-                                "inadist", "inadur", "inact", "emptydur", "emptyct"),
-                    selected = "")
+        div(style="margin-bottom:30px;"),
+        selectInput(ns("response_var"), "Response Variable", response_choices, selected = "")
       ),
       
-      # --- FILL MODE COMMUN AUX BOXPLOTS ---
+      # --- FILL MODE (boxplots) ---
       conditionalPanel(
-        condition = sprintf(
-          "input['%s'] == 'boxplot_cumulate' ||
-           input['%s'] == 'boxplot_light_dark' ||
-           input['%s'] == 'boxplot_delta'",
-          ns("plot_type"), ns("plot_type"), ns("plot_type")
-        ),
+        condition = paste(cond("plot_type","boxplot_cumulate"), "||",
+                          cond("plot_type","boxplot_light_dark"), "||",
+                          cond("plot_type","boxplot_delta")),
         radioButtons(ns("boxplot_fill_mode"), "Boxplot Fill Mode",
-                     choices = c("Full" = "full", "Empty" = "empty"),
-                     selected = "full", inline = TRUE)
+                     c("Full"="full","Empty"="empty"), "full", inline = TRUE)
       ),
       
-      # --- ORDRE & COULEURS GÉNÉRAUX ---
-      textInput(ns("condition_grouped_order"),
-                "Condition Order (comma-separated)",
-                value = "",
-                placeholder = "e.g., cond1, cond2, cond3"),
-      textInput(ns("condition_grouped_color"),
-                "Condition Colors (comma-separated hex)",
-                value = "",
-                placeholder = "e.g., #FF0000, #00FF00, #0000FF"),
-      conditionalPanel(
-        condition = sprintf("input['%s'] == 'pooled' && input['%s'] == 'boxplot_light_dark'",
-                            ns("boxplot_light_dark_mode"), ns("plot_type")),
-        textInput(ns("boxplot_light_dark_periods_colors"),
-                  "Light/Dark Colors (comma-separated hex)",
-                  value = "#FFC300,#B3AAAA")
-      ),
+      # --- Global order & colors ---
+      textInput(ns("condition_grouped_order"), "Condition Order (comma-separated)",
+                value = "", placeholder = "e.g., cond1, cond2, cond3"),
+      textInput(ns("condition_grouped_color"), "Condition Colors (comma-separated hex)",
+                value = "", placeholder = "e.g., #FF0000, #00FF00, #0000FF"),
       
-      # --- OUTPUT & GÉNÉRATION FINALE ---
-      radioButtons(ns("output_mode"), "Output Mode",
-                   choices = c("PNG", "HTML"), selected = "HTML", inline = TRUE),
+      # --- OUTPUT & GENERATION ---
+      radioButtons(ns("output_mode"), "Output Mode", c("PNG","HTML"), "HTML", inline = TRUE),
       uiOutput(ns("figure_selector")),
       div(
-        style = "display: flex; flex-direction: column; gap: 10px;",
-        actionButton(ns("generate_figure"), "Generate Figure", style = "width: 100%;"),
+        style = "display:flex; flex-direction:column; gap:10px;",
+        actionButton(ns("generate_figure"), "Generate Figure", style = "width:100%;"),
         conditionalPanel(
-          condition = sprintf("input['%s'] == 'boxplot_delta'", ns("plot_type")),
-          actionButton(ns("generate_delta_tables"),
-                       "Generate Delta Percentage Tables",
-                       style = "width: 100%;")
+          condition = cond("plot_type","boxplot_delta"),
+          actionButton(ns("generate_delta_tables"), "Generate Delta Percentage Tables", style = "width:100%;")
         )
       )
     ),
     
-    # --- SORTIE ---
+    # --- OUTPUT PANE ----------------------------------------------------------
     box(
-      title = "Visualization Output",
-      width = 8,
-      div(
-        style = "margin-bottom: 10px;",
-        actionButton(ns("clear_console"), "Clear Console", icon = icon("trash"))
-      ),
+      title = "Visualization Output", width = 8,
+      div(style="margin-bottom:10px;", actionButton(ns("clear_console"), "Clear Console", icon = icon("trash"))),
       tabsetPanel(
         id = ns("output_tabs"),
         tabPanel("Interactive Figure",
                  uiOutput(ns("figure_plot")),
-                 div(style = "margin-top: 10px;"),
-                 radioButtons(ns("theme_switch"), "Theme",
-                              choices = c("Light", "Dark"),
-                              selected = "Light", inline = TRUE),
-                 div(style = "margin-top: 10px;"),
-                 downloadButton(ns("save_current_figure"),
-                                "Save Current Figure"),
-                 downloadButton(ns("download_all_for_type"),
-                                "Save All Figures as PNG")
-        ),
+                 div(style="margin-top:10px;"),
+                 radioButtons(ns("theme_switch"), "Theme", c("Light","Dark"), "Light", inline = TRUE),
+                 div(style="margin-top:10px;"),
+                 downloadButton(ns("save_current_figure"), "Save Current Figure")),
         tabPanel("Datasets",
                  selectInput(ns("dataset_type"), "Dataset Type",
-                             choices = c("Boxplot Light/Dark",
-                                         "Boxplot Cumulative",
-                                         "Boxplot Delta",
-                                         "Lineplot"),
+                             c("Boxplot Light/Dark","Boxplot Cumulative","Boxplot Delta","Lineplot"),
                              selected = "Boxplot Light/Dark"),
-                 selectInput(ns("dataset_response_var"), "Response Variable",
-                             choices = c("", "totaldist", "totaldur",
-                                         "totalct", "totalspeed", "lardist",
-                                         "lardur", "larct", "larspeed",
-                                         "smldist", "smldur", "smlct",
-                                         "smlspeed", "inadist", "inadur",
-                                         "inact", "emptydur", "emptyct"),
-                             selected = ""),
+                 selectInput(ns("dataset_response_var"), "Response Variable", response_choices, selected = ""),
                  DT::dataTableOutput(ns("dataset_table")),
-                 div(style = "margin-top: 10px; margin-bottom: 10px;",
-                     downloadButton(ns("download_current_dataset"),
-                                    "Download Current Dataset (.xlsx)"),
-                     downloadButton(ns("download_all_datasets"),
-                                    "Download All Datasets (.zip)")
-                 )
-        ),
+                 div(style="margin-top:10px; margin-bottom:10px;",
+                     downloadButton(ns("download_current_dataset"), "Download Current Dataset (.xlsx)"),
+                     downloadButton(ns("download_all_datasets"), "Download All Datasets (.zip)"))),
         tabPanel("Console Output",
-                 div(style = "background-color: #f5f5f5;
-                             border: 1px solid #ccc;
-                             padding: 10px;
-                             height: 600px;
-                             overflow-y: auto;
-                             font-family: monospace;",
-                     uiOutput(ns("console_output"))
-                 )
-        ),
-        tabPanel("Delta Percentage Tables",
-                 value = "delta_percentage_tables",
+                 div(style="background-color:#f5f5f5;border:1px solid #ccc;padding:10px;height:600px;overflow-y:auto;font-family:monospace;",
+                     uiOutput(ns("console_output")))),
+        tabPanel("Delta Percentage Tables", value = "delta_percentage_tables",
                  selectInput(ns("delta_table_type"), "Table Type",
-                             choices = c("Momentum Comparisons",
-                                         "Condition Comparisons"),
-                             selected = "Momentum Comparisons"),
-                 selectInput(ns("delta_table_var"), "Response Variable",
-                             choices = c("totaldist", "totaldur",
-                                         "totalct", "totalspeed",
-                                         "lardist", "lardur", "larct",
-                                         "larspeed", "smldist", "smldur",
-                                         "smlct", "smlspeed", "inadist",
-                                         "inadur", "inact", "emptydur",
-                                         "emptyct"),
-                             selected = "totaldist"),
+                             c("Momentum Comparisons","Condition Comparisons"), "Momentum Comparisons"),
+                 selectInput(ns("delta_table_var"), "Response Variable", response_choices, selected = "totaldist"),
                  DT::dataTableOutput(ns("delta_percentage_table")),
-                 div(style = "margin-top: 10px; margin-bottom: 10px;",
-                     downloadButton(ns("download_current_delta_table"),
-                                    "Download Current Table (.xlsx)"),
-                     downloadButton(ns("download_all_delta_tables"),
-                                    "Download All Delta Tables (.zip)")
-                 )
-        )
+                 div(style="margin-top:10px; margin-bottom:10px;",
+                     downloadButton(ns("download_current_delta_table"), "Download Current Table (.xlsx)"),
+                     downloadButton(ns("download_all_delta_tables"), "Download All Delta Tables (.zip)")))
       )
     )
   )
 }
 
-# Server for Visualization Module, Light-Dark Mode
+# ==== Server =================================================================
+
 visualization_tm_ldm_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
-    console_messages <- reactiveVal(character())
+    console_messages <- reactiveVal("👋 Ready.")
+    log <- function(...) console_messages(c(console_messages(), paste(...)))
+    ensure_directory <- function(p) if (!dir.exists(p)) dir.create(p, recursive = TRUE)
     
-    add_console_message <- function(msg) {
-      console_messages(c(console_messages(), msg))
+    # ---------- Small helpers ----------
+    get_boundaries_list <- function() {
+      if (is.null(rv$processing_results)) return(NULL)
+      k <- names(rv$processing_results)
+      k <- k[tolower(k) == "boundary_associations_list"]
+      if (length(k)) rv$processing_results[[k[1]]] else NULL
+    }
+    convert_time <- function(x, from, to) {
+      if (from == to) return(x)
+      f <- c(seconds=1, minutes=60, hours=3600, days=86400)
+      x * f[[from]] / f[[to]]
+    }
+    get_df <- function() switch(
+      input$plot_type,
+      "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
+      "boxplot_cumulate"   = rv$all_zone_combined_cum_boxplots[[input$response_var]],
+      "boxplot_delta"      = rv$all_zone_combined_delta_boxplots[[input$response_var]],
+      "lineplot"           = rv$all_zone_combined_lineplots[[input$response_var]]
+    )
+    group_var <- function() if (input$plot_type == "lineplot" && input$lineplot_replicate_mode == "separated") "condition" else "condition_grouped"
+    order_and_colors <- function(df) {
+      gvar <- group_var()
+      ord  <- if (nzchar(input$condition_grouped_order)) trimws(strsplit(input$condition_grouped_order, ",")[[1]]) else unique(df[[gvar]])
+      cols <- if (nzchar(input$condition_grouped_color)) trimws(strsplit(input$condition_grouped_color, ",")[[1]]) else RColorBrewer::brewer.pal(length(unique(df[[gvar]])),"Set1")
+      list(order = ord, colors = cols)
+    }
+    as_widget <- function(p) {
+      if (input$output_mode == "HTML") {
+        pooled <- (input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") ||
+          (input$plot_type == "boxplot_delta"      && input$boxplot_delta_mode      == "pooled")
+        w <- plotly::ggplotly(p, tooltip = "text")
+        if (pooled) w <- plotly::layout(w, boxmode = "group")
+        w
+      } else p
+    }
+    save_current_state <- function(p) {
+      key <- paste(input$response_var, input$selected_zone, tolower(input$theme_switch),
+                   if (input$plot_type=="boxplot_light_dark") input$boxplot_light_dark_mode
+                   else if (input$plot_type=="boxplot_delta") input$boxplot_delta_mode
+                   else if (input$plot_type=="boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
+                   input$boxplot_fill_mode, input$output_mode,
+                   if (input$plot_type=="boxplot_delta") input$transition_select else "", sep = "_")
+      rv$generated_figures[[key]] <- list(plot=p)
+      rv$plot <- as_widget(p)
     }
     
+    # ---------- Validation ----------
+    validate_aggregation_period <- function(period) {
+      v <- as.numeric(period); if (is.na(v) || v <= 0) {
+        showModal(modalDialog(title="Warning", "Aggregation period must be a positive number.", easyClose=TRUE))
+        return(FALSE)
+      }
+      TRUE
+    }
+    validate_delta_time <- function(delta) {
+      v <- as.numeric(delta); if (is.na(v) || v <= 0) {
+        showModal(modalDialog(title="Warning", "Delta time window must be a positive number.", easyClose=TRUE))
+        return(FALSE)
+      }
+      TRUE
+    }
+    validate_transition <- function(transition, boundaries, all_zone_combined) {
+      if (is.null(boundaries) || !nrow(boundaries)) return(FALSE)
+      tt <- boundaries$time_switch[boundaries$transition == transition]
+      if (!length(tt) || !any(abs(all_zone_combined$start - tt) < 1)) {
+        showModal(modalDialog(title = "Invalid Transition",
+                              sprintf("The selected transition '%s' has no corresponding timestamp in the data.", transition),
+                              easyClose = TRUE))
+        return(FALSE)
+      }
+      TRUE
+    }
+    
+    # ---------- UI reactive bits ----------
     observeEvent(input$clear_console, {
       console_messages("👻 No messages yet.")
       showNotification("Console cleared!", type = "message")
     })
-    
-    ensure_directory <- function(path) {
-      if (!dir.exists(path)) dir.create(path, recursive = TRUE)
-    }
-    
-    convert_time <- function(time_val, from_unit, to_unit) {
-      if (from_unit == to_unit) return(time_val)
-      conversion_factors <- list(seconds = 1, minutes = 60, hours = 3600, days = 86400)
-      time_val * conversion_factors[[from_unit]] / conversion_factors[[to_unit]]
-    }
-    
-    compute_wells <- function(df) {
-      group_var <- if (input$lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
-      result <- df %>%
-        group_by(.data[[group_var]], zone, plate_id) %>%
-        summarise(n_wells_plate = n_distinct(animal), .groups = "drop") %>%
-        group_by(.data[[group_var]], zone) %>%
-        summarise(n_wells = sum(n_wells_plate), .groups = "drop")
-      add_console_message(sprintf("Debug: Wells per %s and zone:", group_var))
-      for (i in 1:nrow(result)) {
-        add_console_message(sprintf("  %s, Zone %s: %d wells", result[[group_var]][i], result$zone[i], result$n_wells[i]))
-      }
-      result
-    }
-    
-    compute_n_animals <- function(df) {
-      df %>%
-        # 1) compter les animaux DISTINCTS par plaque
-        group_by(condition_grouped, zone, plate_id) %>%
-        summarise(
-          n_animals_plate = n_distinct(animal),
-          .groups = "drop"
-        ) %>%
-        # 2) sommer ces effectifs de plaque en un total par condition et zone
-        group_by(condition_grouped, zone) %>%
-        summarise(
-          n = sum(n_animals_plate),
-          .groups = "drop"
-        ) %>%
-        # optionnel : placer le label en bas du graphique
-        mutate(y = -Inf)
-    }
-    
-    validate_aggregation_period <- function(period, time_unit_original, time_unit_target, convert_time_unit) {
-      period_num <- as.numeric(period)
-      if (is.na(period_num) || period_num <= 0) {
-        add_console_message("Warning: Aggregation period must be a positive number.")
-        showModal(modalDialog(
-          title = "Warning",
-          "Aggregation period must be a positive number. Please adjust and try again.",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        return(FALSE)
-      }
-      agg_unit <- if (convert_time_unit == "Yes") time_unit_target else time_unit_original
-      agg_period_seconds <- convert_time(period_num, agg_unit, "seconds")
-      add_console_message(sprintf("Debug: Aggregation period is %s %s (= %s seconds)", period_num, agg_unit, round(agg_period_seconds, 2)))
-      if (agg_unit == "minutes" && period_num > 10) {
-        add_console_message(sprintf("Warning: Aggregation period (%s %s) seems large for minutes. Consider adjusting it.", period_num, agg_unit))
-        showModal(modalDialog(
-          title = "Caution",
-          sprintf("Aggregation period (%s %s) seems large. Consider adjusting it for better resolution.", period_num, agg_unit),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-      } else if (agg_unit == "hours" && period_num > 1) {
-        add_console_message(sprintf("Warning: Aggregation period (%s %s) seems large for hours. Consider adjusting it.", period_num, agg_unit))
-        showModal(modalDialog(
-          title = "Caution",
-          sprintf("Aggregation period (%s %s) seems large. Consider adjusting it for better resolution.", period_num, agg_unit),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-      } else if (agg_unit == "days" && period_num > 0.1) {
-        add_console_message(sprintf("Warning: Aggregation period (%s %s) seems large for days. Consider adjusting it.", period_num, agg_unit))
-        showModal(modalDialog(
-          title = "Caution",
-          sprintf("Aggregation period (%s %s) seems large. Consider adjusting it for better resolution.", period_num, agg_unit),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-      }
-      TRUE
-    }
-    
-    validate_delta_time <- function(delta) {
-      delta_num <- as.numeric(delta)
-      if (is.na(delta_num) || delta_num <= 0) {
-        add_console_message("Warning: Delta time window must be a positive number.")
-        showModal(modalDialog(
-          title = "Warning",
-          "Delta time window must be a positive number. Please adjust and try again.",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        return(FALSE)
-      }
-      TRUE
-    }
-    
     output$aggregation_period_label <- renderUI({
       unit <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
       textInput(ns("aggregation_period"), sprintf("Aggregation Period (in %s)", unit), value = "60")
     })
-    
     output$transition_select_ui <- renderUI({
-      req(rv$processing_results, rv$processing_results$Boundary_Associations_list)
-      boundaries <- bind_rows(rv$processing_results$Boundary_Associations_list) %>% distinct()
-      transitions <- boundaries$transition
-      if (length(transitions) == 0) {
-        add_console_message("⚠️ Aucun transition trouvé.")
-        choices <- "No transitions available"
-      } else {
-        choices <- transitions
-      }
-      selectInput(
-        ns("transition_select"),
-        "Select Transition",
-        choices = choices,
-        selected = choices[1]
-      )
+      req(rv$processing_results, get_boundaries_list())
+      b <- dplyr::bind_rows(get_boundaries_list()) %>% dplyr::distinct()
+      tr <- unique(b$transition)
+      if (!length(tr)) return(div("No transitions available. Please run processing first."))
+      selectInput(ns("transition_select"), "Select Transition", choices = tr, selected = tr[1])
     })
     
-    validate_transition <- function(transition, boundaries, all_zone_combined) {
-      if (transition == "No transitions available") {
-        add_console_message("Warning: No valid transitions available.")
-        showModal(modalDialog(
-          title = "Warning",
-          "No valid transitions are available. Please check your data.",
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        return(FALSE)
-      }
-      trans_time <- boundaries$time_switch[boundaries$transition == transition]
-      if (length(trans_time) == 0 || !any(abs(all_zone_combined$start - trans_time) < 1)) {
-        add_console_message(sprintf("Warning: Transition '%s' has no corresponding timestamp in the data.", transition))
-        showModal(modalDialog(
-          title = "Invalid Transition",
-          sprintf("The selected transition '%s' does not have a corresponding timestamp in the data. Please select another transition.", transition),
-          easyClose = TRUE,
-          footer = NULL
-        ))
-        return(FALSE)
-      }
-      TRUE
+    # ---------- Dataset generators ----------
+    prepare_all_zone <- function() {
+      req(rv$processing_results, "processed_data_list" %in% names(rv$processing_results))
+      rv$processed_data_list <- purrr::map(rv$processing_results$processed_data_list, ~ dplyr::mutate(.x, plate_id = as.character(plate_id)))
+      rv$all_zone_combined   <- dplyr::bind_rows(rv$processed_data_list)
+      rv$all_zone_combined
     }
     
     observeEvent(input$generate_light_dark_dfs, {
-      add_console_message(sprintf("Debug: rv$processing_results is %s", if (is.null(rv$processing_results)) "NULL" else "defined"))
       tryCatch({
-        if (is.null(rv$processing_results)) {
-          add_console_message("Warning: rv$processing_results is NULL. Please run processing first.")
-          return()
-        }
-        if (!"Processed_Data_list" %in% names(rv$processing_results)) {
-          add_console_message("Error: Processed_Data_list not found in rv$processing_results.")
-          return()
-        }
-        add_console_message(sprintf("Debug: Processed_Data_list has %d elements", length(rv$processing_results$Processed_Data_list)))
-        rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
-        all_zone_combined <- bind_rows(rv$Processed_Data_list)
-        rv$all_zone_combined <- all_zone_combined
-        add_console_message("Binding processed data into all_zone_combined...")
-        required_cols <- c("period_without_numbers", "zone", "condition_tagged", "condition", "condition_grouped",
-                           "plate_id", "animal", "start", "totaldist", "totaldur", "totalct", "totalspeed",
-                           "lardist", "lardur", "larct", "larspeed", "smldist", "smldur", "smlct", "smlspeed",
-                           "inadist", "inadur", "inact", "emptydur", "emptyct")
-        if (length(missing_cols <- setdiff(required_cols, colnames(all_zone_combined))) > 0) {
-          add_console_message(sprintf("Warning: Missing columns: %s", paste(missing_cols, collapse = ", ")))
-        }
-        response_vars <- c("totaldist", "totaldur", "totalct", "totalspeed", "lardist", "lardur", "larct",
-                           "larspeed", "smldist", "smldur", "smlct", "smlspeed", "inadist", "inadur", "inact",
-                           "emptydur", "emptyct")
-        unique_periods <- unique(all_zone_combined$period_without_numbers)
-        add_console_message(sprintf("Detected periods: %s", paste(unique_periods, collapse = ", ")))
-        
-        light_period <- unique_periods[grepl("light", unique_periods, ignore.case = TRUE)]
-        dark_period <- unique_periods[grepl("dark", unique_periods, ignore.case = TRUE)]
-        
-        if (length(light_period) == 0 && length(dark_period) == 0) {
-          add_console_message("⚠️ Warning: no 'light' or 'dark' labels detected – light/dark plots may be empty.")
-        } else {
-          if (length(light_period) == 0) {
-            add_console_message("⚠️ Warning: no 'light' period detected; only 'dark' periods will be plotted.")
-          }
-          if (length(dark_period) == 0) {
-            add_console_message("⚠️ Warning: no 'dark' period detected; only 'light' periods will be plotted.")
-          }
-        }
-        
-        add_console_message(sprintf(
-          "Using light = %s; dark = %s",
-          if (length(light_period) > 0) paste(light_period, collapse = ", ") else "<none>",
-          if (length(dark_period) > 0) paste(dark_period, collapse = ", ") else "<none>"
-        ))
-        
-        calculate_means <- function(var) {
-          all_zone_combined %>%
-            filter(period_without_numbers %in% c(light_period, dark_period)) %>%
-            group_by(period_without_numbers, zone, condition_tagged, plate_id) %>%
-            summarise(
-              plate_id = first(plate_id),
-              start = first(start),
-              period_with_numbers = first(period_with_numbers),
-              condition_grouped = first(condition_grouped),
-              condition = first(condition),
-              animal = first(animal),
-              mean_val = mean(.data[[var]], na.rm = TRUE),
-              .groups = "drop"
-            )
-        }
-        rv$all_zone_combined_light_dark_boxplots <- setNames(lapply(response_vars, calculate_means), response_vars)
-        add_console_message("Processed_data_for_light_dark_boxplots created.")
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", if (nzchar(e$message)) e$message else "Unknown error"))
-      })
+        az <- prepare_all_zone()
+        periods <- unique(az$period_without_numbers)
+        light_period <- periods[grepl("light", periods, ignore.case=TRUE)]
+        dark_period  <- periods[grepl("dark",  periods, ignore.case=TRUE)]
+        calc <- function(v) az %>%
+          dplyr::filter(period_without_numbers %in% c(light_period, dark_period)) %>%
+          dplyr::group_by(period_without_numbers, zone, condition_tagged, plate_id) %>%
+          dplyr::summarise(plate_id=first(plate_id), start=first(start),
+                           period_with_numbers=first(period_with_numbers),
+                           condition_grouped=first(condition_grouped),
+                           condition=first(condition), animal=first(animal),
+                           mean_val=mean(.data[[v]], na.rm=TRUE), .groups="drop")
+        rv$all_zone_combined_light_dark_boxplots <- setNames(lapply(RESPONSE_VARS, calc), RESPONSE_VARS)
+        log("✅ Light/Dark datasets created (17 variables).")
+      }, error=function(e) log(paste("❌ Light/Dark generation failed:", e$message)))
     })
     
     observeEvent(input$generate_cumulate_dfs, {
-      add_console_message(sprintf("Debug: rv$processing_results is %s", if (is.null(rv$processing_results)) "NULL" else "defined"))
       tryCatch({
-        if (is.null(rv$processing_results)) {
-          add_console_message("Warning: rv$processing_results is NULL. Please run processing first.")
-          return()
-        }
-        if (!"Processed_Data_list" %in% names(rv$processing_results)) {
-          add_console_message("Error: Processed_Data_list not found in rv$processing_results.")
-          return()
-        }
-        rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
-        all_zone_combined <- bind_rows(rv$Processed_Data_list)
-        rv$all_zone_combined <- all_zone_combined
-        response_vars <- c("totaldist", "totaldur", "totalct", "totalspeed", "lardist", "lardur", "larct",
-                           "larspeed", "smldist", "smldur", "smlct", "smlspeed", "inadist", "inadur", "inact",
-                           "emptydur", "emptyct")
-        summarize_cum_box <- function(var) {
-          all_zone_combined %>%
-            group_by(condition_grouped, zone, plate_id, animal) %>%
-            summarise(
-              cum = sum(.data[[var]], na.rm = TRUE),
-              condition_tagged = first(condition_tagged),
-              .groups = "drop"
-            )
-        }
-        rv$all_zone_combined_cum_boxplots <- setNames(lapply(response_vars, summarize_cum_box), response_vars)
-        add_console_message("Processed_data_for_cumulated_boxplots created.")
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", if (nzchar(e$message)) e$message else "Unknown error"))
-      })
+        az <- prepare_all_zone()
+        calc <- function(v) az %>%
+          dplyr::group_by(condition_grouped, zone, plate_id, animal) %>%
+          dplyr::summarise(cum = sum(.data[[v]], na.rm=TRUE),
+                           condition_tagged = dplyr::first(condition_tagged), .groups="drop")
+        rv$all_zone_combined_cum_boxplots <- setNames(lapply(RESPONSE_VARS, calc), RESPONSE_VARS)
+        log("✅ Cumulative datasets created (17 variables).")
+      }, error=function(e) log(paste("❌ Cumulative generation failed:", e$message)))
     })
     
     observeEvent(input$generate_delta_dfs, {
-      add_console_message(sprintf("Debug: rv$processing_results is %s",
-                                  if (is.null(rv$processing_results)) "NULL" else "defined"))
       tryCatch({
-        if (is.null(rv$processing_results) ||
-            !"Processed_Data_list" %in% names(rv$processing_results) ||
-            !"Boundary_Associations_list" %in% names(rv$processing_results)) {
-          add_console_message("Warning: Please run processing first.")
-          return()
-        }
-        rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
-        all_zone_combined <- bind_rows(rv$Processed_Data_list)
-        rv$all_zone_combined <- all_zone_combined
-        
-        boundaries <- bind_rows(rv$processing_results$Boundary_Associations_list) %>% distinct()
-        if (nrow(boundaries) == 0) {
-          add_console_message("Warning: No transitions found in Boundary_Associations_list.")
-          return()
-        }
-        
+        req("boundary_associations_list" %in% names(rv$processing_results))
+        az <- prepare_all_zone()
+        b  <- dplyr::bind_rows(get_boundaries_list()) %>% dplyr::distinct()
+        if (!nrow(b)) return(log("⚠️ No transitions found."))
         if (!validate_delta_time(input$delta_time)) return()
+        if (!validate_transition(input$transition_select, b, az)) return()
         
-        if (!validate_transition(input$transition_select, boundaries, all_zone_combined)) return()
+        b_clean <- b %>% dplyr::mutate(plate_id = as.character(plate_id)) %>%
+          dplyr::distinct(transition, plate_id, time_switch, .keep_all = TRUE)
+        delta <- as.numeric(input$delta_time)
+        tr    <- input$transition_select
+        bd_sel <- b_clean %>% dplyr::filter(transition == tr) %>% dplyr::select(plate_id, time_switch)
         
-        response_vars <- c("totaldist","totaldur","totalct","totalspeed",
-                           "lardist","lardur","larct","larspeed",
-                           "smldist","smldur","smlct","smlspeed",
-                           "inadist","inadur","inact","emptydur","emptyct")
+        joined <- az %>%
+          dplyr::mutate(plate_id = as.character(plate_id)) %>%
+          dplyr::inner_join(bd_sel, by="plate_id") %>%
+          dplyr::mutate(phase_raw = dplyr::case_when(
+            start >= time_switch - delta & start <  time_switch            ~ "before",
+            start >= time_switch          & start <  time_switch + delta   ~ "switch",
+            start >= time_switch + delta  & start <  time_switch + 2*delta ~ "after",
+            TRUE ~ NA_character_)) %>%
+          dplyr::filter(!is.na(phase_raw)) %>%
+          dplyr::mutate(transition_phase = paste0(tr, "_", phase_raw))
+        if (!nrow(joined)) return(log("⚠️ No data in requested delta windows."))
         
-        summarize_delta_box <- function(var) {
-          delta <- as.numeric(input$delta_time)
-          selected_transition <- input$transition_select
-          trans_time <- boundaries$time_switch[boundaries$transition == selected_transition]
-          
-          all_zone_combined %>%
-            mutate(transition_phase = case_when(
-              start >= trans_time - delta & start < trans_time               ~ paste0(selected_transition, "_before"),
-              start >= trans_time             & start < trans_time + delta   ~ paste0(selected_transition, "_switch"),
-              start >= trans_time + delta     & start < trans_time + 2*delta ~ paste0(selected_transition, "_after"),
-              TRUE                                                             ~ NA_character_
-            )) %>%
-            filter(!is.na(transition_phase)) %>%
-            group_by(transition_phase, zone, condition_tagged, plate_id, animal) %>%
-            summarise(
-              mean_val = mean(.data[[var]], na.rm = TRUE),
-              condition_grouped = first(condition_grouped),
-              .groups = "drop"
-            )
-        }
-        
-        rv$all_zone_combined_delta_boxplots <- setNames(lapply(response_vars, summarize_delta_box), response_vars)
-        
-        add_console_message("✅ Processed_data_for_delta_boxplots created.")
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", e$message))
-      })
+        phased_long <- tidyr::pivot_longer(joined, cols = tidyselect::all_of(RESPONSE_VARS),
+                                           names_to = "variable", values_to = "value") %>%
+          dplyr::group_by(transition_phase, zone, condition_tagged, plate_id, animal, variable) %>%
+          dplyr::summarise(mean_val = mean(value, na.rm=TRUE),
+                           condition_grouped = dplyr::first(condition_grouped), .groups="drop")
+        rv$all_zone_combined_delta_boxplots <- split(phased_long, phased_long$variable)
+        log(sprintf("✅ Delta datasets created for transition '%s' (±%ss).", tr, delta))
+      }, error=function(e) log(paste("❌ Delta generation failed:", e$message)))
     })
     
     observeEvent(input$generate_lineplot_dfs, {
-      add_console_message(sprintf("Debug: rv$processing_results is %s", if (is.null(rv$processing_results)) "NULL" else "defined"))
       tryCatch({
-        if (is.null(rv$processing_results)) {
-          add_console_message("Warning: rv$processing_results is NULL. Please run processing first.")
-          return()
+        az <- prepare_all_zone()
+        compute_wells <- function(df) {
+          gv <- if (input$lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
+          df %>%
+            dplyr::group_by(.data[[gv]], zone, plate_id) %>%
+            dplyr::summarise(n_wells_plate = dplyr::n_distinct(animal), .groups="drop") %>%
+            dplyr::group_by(.data[[gv]], zone) %>%
+            dplyr::summarise(n_wells = sum(n_wells_plate), .groups="drop")
         }
-        if (!"Processed_Data_list" %in% names(rv$processing_results)) {
-          add_console_message("Error: Processed_Data_list not found in rv$processing_results.")
-          return()
-        }
-        rv$Processed_Data_list <- map(rv$processing_results$Processed_Data_list, ~ mutate(.x, plate_id = as.character(plate_id)))
-        all_zone_combined <- bind_rows(rv$Processed_Data_list)
-        rv$all_zone_combined <- all_zone_combined
-        wells_per_condition <- compute_wells(all_zone_combined)
-        rv$wells_per_condition <- wells_per_condition
-        add_console_message("Well counts per condition and zone computed.")
-        target_unit <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
-        if (!validate_aggregation_period(input$aggregation_period, input$time_unit_original, target_unit, input$time_unit_convert)) {
-          return()
-        }
-        response_vars <- c("totaldist", "totaldur", "totalct", "totalspeed", "lardist", "lardur", "larct",
-                           "larspeed", "smldist", "smldur", "smlct", "smlspeed", "inadist", "inadur", "inact",
-                           "emptydur", "emptyct")
-        summarize_line <- function(var) {
-          agg_period <- as.numeric(input$aggregation_period)
+        wells <- compute_wells(az); rv$wells_per_condition <- wells
+        
+        if (!validate_aggregation_period(input$aggregation_period)) return()
+        calc <- function(v) {
           agg_unit <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
-          agg_seconds <- convert_time(agg_period, agg_unit, "seconds")
-          add_console_message(sprintf("Debug: Aggregation period for %s is %s %s (= %s seconds)", var, agg_period, agg_unit, round(agg_seconds, 2)))
-          
-          group_var <- if (input$lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
-          
-          df <- all_zone_combined %>%
-            mutate(start_rounded = floor(start / agg_seconds) * agg_seconds) %>%
-            group_by(.data[[group_var]], zone, start_rounded, animal) %>%
-            summarise(var_value = sum(.data[[var]], na.rm = TRUE), .groups = "drop")
-          add_console_message(sprintf("Debug: After animal-level aggregation, %d rows for %s", nrow(df), var))
-          
-          df <- df %>%
-            group_by(.data[[group_var]], zone, start_rounded) %>%
-            summarise(total_val = sum(var_value, na.rm = TRUE), .groups = "drop")
-          add_console_message(sprintf("Debug: After summing across animals, %d rows for %s", nrow(df), var))
-          
-          df <- df %>%
-            left_join(wells_per_condition, by = c(group_var, "zone")) %>%
-            mutate(val_per_well = total_val / n_wells)
-          
-          if (input$time_unit_original != agg_unit) {
-            add_console_message(sprintf("Debug: Converting time axis from %s to %s for %s", input$time_unit_original, agg_unit, var))
-            df <- df %>%
-              mutate(start_rounded = convert_time(start_rounded, "seconds", agg_unit))
-          }
-          
-          unique_points <- df %>%
-            group_by(.data[[group_var]], zone, start_rounded) %>%
-            summarise(count = n(), .groups = "drop")
-          if (any(unique_points$count > 1)) {
-            add_console_message(sprintf("Warning: Multiple points per time step detected in lineplot dataset for %s:", var))
-            for (i in which(unique_points$count > 1)) {
-              add_console_message(sprintf("  %s, Zone %s, Time %s: %d points", unique_points[[group_var]][i], unique_points$zone[i], unique_points$start_rounded[i], unique_points$count[i]))
-            }
-          } else {
-            add_console_message(sprintf("Lineplot dataset for %s has one point per time step per %s per zone.", var, group_var))
-          }
-          df
+          agg_s    <- convert_time(as.numeric(input$aggregation_period), agg_unit, "seconds")
+          gv <- if (input$lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
+          az %>% dplyr::mutate(start_rounded = floor(start / agg_s) * agg_s) %>%
+            dplyr::group_by(.data[[gv]], zone, start_rounded, animal) %>%
+            dplyr::summarise(var_value = sum(.data[[v]], na.rm=TRUE), .groups="drop") %>%
+            dplyr::group_by(.data[[gv]], zone, start_rounded) %>%
+            dplyr::summarise(total_val = sum(var_value, na.rm=TRUE), .groups="drop") %>%
+            dplyr::left_join(wells, by = c(gv, "zone")) %>%
+            dplyr::mutate(val_per_well = total_val / n_wells,
+                          start_rounded = if (input$time_unit_original != agg_unit)
+                            convert_time(start_rounded,"seconds",agg_unit) else start_rounded)
         }
-        rv$all_zone_combined_lineplots <- setNames(lapply(response_vars, summarize_line), response_vars)
-        add_console_message("Processed_data_for_lineplots created.")
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", if (nzchar(e$message)) e$message else "Unknown error"))
-      })
+        rv$all_zone_combined_lineplots <- setNames(lapply(RESPONSE_VARS, calc), RESPONSE_VARS)
+        log("✅ Lineplot datasets created (normalized per well).")
+      }, error=function(e) log(paste("❌ Lineplot generation failed:", e$message)))
     })
     
+    # ---------- Data table outputs ----------
     output$dataset_table <- DT::renderDataTable({
       req(input$dataset_type, input$dataset_response_var)
       df <- switch(input$dataset_type,
                    "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots[[input$dataset_response_var]],
                    "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots[[input$dataset_response_var]],
-                   "Boxplot Delta" = rv$all_zone_combined_delta_boxplots[[input$dataset_response_var]],
-                   "Lineplot" = rv$all_zone_combined_lineplots[[input$dataset_response_var]])
-      req(df)
-      DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE))
+                   "Boxplot Delta"      = rv$all_zone_combined_delta_boxplots[[input$dataset_response_var]],
+                   "Lineplot"           = rv$all_zone_combined_lineplots[[input$dataset_response_var]])
+      req(df); DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE))
     })
     
     output$figure_selector <- renderUI({
       req(input$plot_type, input$response_var)
-      df <- switch(input$plot_type,
-                   "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
-                   "boxplot_cumulate" = rv$all_zone_combined_cum_boxplots[[input$response_var]],
-                   "boxplot_delta" = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-                   "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]])
-      req(df)
+      df <- get_df()
+      if (is.null(df)) return(helpText("Generate datasets first (click the button above)."))
       zones <- sort(unique(df$zone))
-      selectInput(ns("selected_zone"), "Select Zone", choices = setNames(zones, paste("Zone", zones)), selected = zones[1])
+      # valeurs envoyées = character, labels = "Zone X"
+      choices <- setNames(as.character(zones), paste("Zone", zones))
+      selectInput(ns("selected_zone"), "Select Zone", choices = choices, selected = choices[1])
     })
     
-    generate_plot <- function(df, response_var, plot_type, boxplot_mode, lineplot_replicate_mode, selected_zone, theme_choice, condition_order, condition_colors) {
+    
+    # ---------- Plot factory ----------
+    # ---------- Plot factory (drop-in) ----------
+    generate_plot <- function(df, response_var, plot_type, boxplot_mode, lineplot_mode,
+                              selected_zone, theme_choice, condition_order, condition_colors) {
       sub <- subset(df, zone == selected_zone)
       theme_obj <- if (tolower(theme_choice) == "light") light_theme() else dark_theme()
-      edge_col <- if (tolower(theme_choice) == "light") "black" else "white"
-      cap_text_boxplot_light_dark <- stringr::str_wrap("Each point corresponds to the mean or cumulative value of the response variable for one animal.", width = 60)
-      cap_text_boxplot_cumulative <- stringr::str_wrap("Each point corresponds to the cumulative value of the response variable for one animal.", width = 60)
-      cap_text_boxplot_delta <- stringr::str_wrap("Each point corresponds to the mean value of the response variable for one animal around a transition.", width = 60)
-      cap_text_lineplot <- stringr::str_wrap("Each line represents the normalized response variable over time for a condition.", width = 60)
+      edge_col  <- if (tolower(theme_choice) == "light") "black" else "white"
+      alpha_val <- if (input$boxplot_fill_mode == "full") 0.6 else 1
+      cap_box_ld <- stringr::str_wrap("Each point corresponds to the mean value for one animal.", 60)
+      cap_box_cu <- stringr::str_wrap("Each point corresponds to the cumulative value for one animal.", 60)
+      cap_box_de <- stringr::str_wrap("Each point is the mean for one animal around a transition.", 60)
+      cap_line   <- stringr::str_wrap("Each line is the normalized response per condition over time.", 60)
+      
+      # helper for a filled/empty boxplot layer with explicit grouping
+      box_layer <- function(mapping, pooled = FALSE) {
+        if (input$boxplot_fill_mode == "full") {
+          geom_boxplot(mapping = mapping, width = 0.7, outlier.shape = NA,
+                       alpha = alpha_val, color = edge_col)
+        } else {
+          geom_boxplot(mapping = modifyList(mapping, aes(fill = NULL)), width = 0.7,
+                       outlier.shape = NA, fill = NA, alpha = alpha_val, color = edge_col)
+        }
+      }
       
       if (plot_type == "boxplot_light_dark") {
-        alpha_value <- if (input$boxplot_fill_mode == "full") 0.6 else 1
-        dodge_width <- 0.8
+        sub$period_without_numbers <- factor(sub$period_without_numbers,
+                                             levels = c("light","dark"),
+                                             labels = c("Light period","Dark period"))
         
         if (boxplot_mode == "separated") {
-          p <- ggplot(sub, aes(x = condition_grouped, y = mean_val)) +
-            (if (input$boxplot_fill_mode == "full") {
-              geom_boxplot(aes(fill = condition_grouped), width = 0.8, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-            } else {
-              geom_boxplot(fill = NA, width = 0.8, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-            }) +
-            geom_jitter(aes(fill = condition_grouped), position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.2),
-                        size = 1.75, alpha = 0.4, shape = 21, color = edge_col) +
+          gg <- ggplot(sub, aes(x = condition_grouped, y = mean_val)) +
+            box_layer(aes(group = condition_grouped, fill = condition_grouped)) +
+            geom_jitter(
+              aes(fill = condition_grouped,
+                  text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal,
+                                "<br>Plate ID: ", plate_id, "<br>Value: ", sprintf("%.2f", mean_val))),
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.2),
+              size = 1.75, alpha = 0.4, shape = 21, color = edge_col
+            ) +
             facet_wrap(~period_without_numbers, scales = "free_x") +
             scale_fill_manual(values = condition_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), caption = cap_text_boxplot_light_dark) +
+            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), caption = cap_box_ld) +
             theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "none",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
-          p_html <- ggplot(sub, aes(x = condition_grouped, y = mean_val,
-                                    text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal, "<br>Plate ID: ", plate_id,
-                                                  "<br>Value: ", sprintf("%.2f", mean_val)))) +
-            (if (input$boxplot_fill_mode == "full") {
-              geom_boxplot(aes(fill = condition_grouped), position = position_dodge2(width = 0.8, preserve = "single"), width = 0.7, outlier.shape = NA,
-                           alpha = alpha_value, color = edge_col)
-            } else {
-              geom_boxplot(fill = NA, position = position_dodge2(width = 0.8, preserve = "single"), width = 0.7, outlier.shape = NA,
-                           alpha = alpha_value, color = edge_col)
-            }) +
-            geom_jitter(aes(fill = condition_grouped), position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.2),
-                        shape = 21, size = 1.75, alpha = 0.4, color = edge_col) +
-            facet_wrap(~period_without_numbers, scales = "free_x", shrink = FALSE) +
-            scale_fill_manual(values = condition_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), caption = cap_text_boxplot_light_dark) +
-            theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "right",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
+            theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(), plot.caption.position = "plot",
+                  plot.caption = element_text(hjust = 1))
+          return(gg)
         } else {
-          sub <- sub %>% tidyr::complete(condition_grouped, period_without_numbers, fill = list(mean_val = NA))
-          period_colors <- trimws(unlist(strsplit(input$boxplot_light_dark_periods_colors, ",")))
-          p <- ggplot(sub, aes(x = condition_grouped, y = mean_val, fill = period_without_numbers)) +
-            geom_boxplot(position = position_dodge(width = dodge_width), width = 0.7, outlier.shape = NA,
-                         alpha = if (input$boxplot_fill_mode == "full") alpha_value else 0, color = edge_col) +
-            geom_jitter(aes(fill = period_without_numbers), position = position_jitterdodge(jitter.width = 0.2, dodge.width = dodge_width),
-                        shape = 21, color = edge_col, size = 1.75, alpha = 0.4) +
-            scale_fill_manual(values = period_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), fill = "Period", caption = cap_text_boxplot_light_dark) +
+          # pooled light/dark
+          sub <- tidyr::complete(sub, condition_grouped, period_without_numbers, fill = list(mean_val = NA))
+          per_cols <- trimws(strsplit(input$boxplot_light_dark_periods_colors, ",")[[1]])
+          
+          gg <- ggplot(sub, aes(x = condition_grouped, y = mean_val)) +
+            box_layer(aes(group = interaction(condition_grouped, period_without_numbers),
+                          fill  = period_without_numbers)) +
+            geom_jitter(
+              aes(fill = period_without_numbers,
+                  text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal,
+                                "<br>Plate ID: ", plate_id, "<br>Value: ", sprintf("%.2f", mean_val))),
+              position = position_jitterdodge(jitter.width = 0, dodge.width = 0.8),
+              shape = 21, color = edge_col, size = 1.75, alpha = 0.4
+            ) +
+            scale_fill_manual(values = per_cols) +
+            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), fill = "Period", caption = cap_box_ld) +
             theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "right",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
-          p_html <- ggplot(sub, aes(x = condition_grouped, y = mean_val,
-                                    text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal, "<br>Plate ID: ", plate_id,
-                                                  "<br>Value: ", sprintf("%.2f", mean_val)))) +
-            geom_boxplot(aes(fill = period_without_numbers), position = position_dodge(width = dodge_width), width = 0.7, outlier.shape = NA,
-                         alpha = if (input$boxplot_fill_mode == "full") alpha_value else 0, color = edge_col) +
-            geom_jitter(aes(fill = period_without_numbers), position = position_jitterdodge(jitter.width = 0, dodge.width = dodge_width),
-                        shape = 21, size = 1.75, alpha = 0.4, color = edge_col) +
-            scale_fill_manual(values = period_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), fill = "Period", caption = cap_text_boxplot_light_dark) +
-            theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "right",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
+            theme(legend.position = "right", axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(), plot.caption.position = "plot",
+                  plot.caption = element_text(hjust = 1))
+          return(gg)
         }
-        return(if (input$output_mode == "PNG") p else p_html)
-      } else if (plot_type == "boxplot_cumulate") {
-        n_animals <- compute_n_animals(sub)
-        alpha_value <- if (input$boxplot_fill_mode == "full") 0.6 else 1
+      }
+      
+      if (plot_type == "boxplot_cumulate") {
+        n_animals <- sub %>%
+          dplyr::group_by(condition_grouped, zone, plate_id) %>%
+          dplyr::summarise(n_animals_plate = dplyr::n_distinct(animal), .groups = "drop") %>%
+          dplyr::group_by(condition_grouped, zone) %>%
+          dplyr::summarise(n = sum(n_animals_plate), .groups = "drop") %>%
+          dplyr::mutate(y = -Inf)
         
-        p <- ggplot(sub, aes(x = condition_grouped, y = cum)) +
-          (if (input$boxplot_fill_mode == "full") {
-            geom_boxplot(aes(fill = condition_grouped), varwidth = TRUE, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-          } else {
-            geom_boxplot(fill = NA, varwidth = TRUE, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-          }) +
-          geom_jitter(aes(fill = condition_grouped), width = 0.2, size = 1.5, alpha = 0.6, shape = 21, color = edge_col) +
-          geom_text(
-            data = n_animals,
-            aes(x = condition_grouped, y = y, label = paste0("n=", n)),
-            inherit.aes = FALSE,
-            vjust = -0.5,
-            size = 3,
-            color = edge_col
+        gg <- ggplot(sub, aes(x = condition_grouped, y = cum)) +
+          box_layer(aes(group = condition_grouped, fill = condition_grouped)) +
+          geom_jitter(
+            aes(fill = condition_grouped,
+                text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal,
+                              "<br>Plate ID: ", plate_id, "<br>Value: ", sprintf("%.2f", cum))),
+            width = 0.2, size = 1.5, alpha = 0.6, shape = 21, color = edge_col
           ) +
+          geom_text(data = n_animals, aes(x = condition_grouped, y = y, label = paste0("n=", n)),
+                    inherit.aes = FALSE, vjust = -0.5, size = 3, color = edge_col) +
           scale_fill_manual(values = condition_colors) +
-          labs(y = sprintf("Cumulative %s (Zone %s)", response_var, selected_zone),
-               caption = cap_text_boxplot_cumulative
-          ) +
+          labs(y = sprintf("Cumulative %s (Zone %s)", response_var, selected_zone), caption = cap_box_cu) +
           theme_obj +
-          theme(
-            plot.caption.position = "plot",
-            plot.caption = element_text(hjust = 1),
-            legend.position = "none",
-            axis.text.x = element_text(angle = 45, hjust = 1),
-            axis.title.x = element_blank()
-          )
-        
-        p_html <- ggplot(sub, aes(x = condition_grouped, y = cum,
-                                  text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal, "<br>Plate ID: ", plate_id,
-                                                "<br>Value: ", sprintf("%.2f", cum)))) +
-          (if (input$boxplot_fill_mode == "full") {
-            geom_boxplot(aes(fill = condition_grouped), varwidth = TRUE, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-          } else {
-            geom_boxplot(fill = NA, varwidth = TRUE, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-          }) +
-          geom_jitter(aes(fill = condition_grouped), width = 0.2, size = 1.5, alpha = 0.6, shape = 21, color = edge_col) +
-          geom_text(
-            data = n_animals,
-            aes(x = condition_grouped, y = y, label = paste0("n=", n)),
-            inherit.aes = FALSE,
-            vjust = -0.5,
-            size = 3,
-            color = edge_col
-          ) +
-          scale_fill_manual(values = condition_colors) +
-          labs(y = sprintf("Cumulative %s (Zone %s)", response_var, selected_zone),
-               caption = cap_text_boxplot_cumulative
-          ) +
-          theme_obj +
-          theme(
-            plot.caption.position = "plot",
-            plot.caption = element_text(hjust = 1),
-            legend.position = "right",
-            axis.text.x = element_text(angle = 45, hjust = 1),
-            axis.title.x = element_blank()
-          )
-        
-        return(if (input$output_mode == "PNG") p else p_html)
-      } else if (plot_type == "boxplot_delta") {
-        alpha_value <- if (input$boxplot_fill_mode == "full") 0.6 else 1
-        dodge_width <- 0.8
-        selected_transition <- input$transition_select
-        sub <- sub %>% filter(grepl(selected_transition, transition_phase))
-        # Définir l'ordre des phases
+          theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1),
+                axis.title.x = element_blank(), plot.caption.position = "plot",
+                plot.caption = element_text(hjust = 1))
+        return(gg)
+      }
+      
+      if (plot_type == "boxplot_delta") {
+        tr <- input$transition_select
+        sub <- dplyr::filter(sub, grepl(tr, transition_phase))
         sub$phase <- factor(sub$transition_phase,
-                            levels = paste0(selected_transition, "_", c("before", "switch", "after")),
-                            labels = c("Before", "Switch", "After"),
-                            ordered = TRUE)
+                            levels = paste0(tr, "_", c("before","switch","after")),
+                            labels = c("Before","Switch","After"), ordered = TRUE)
         
         if (boxplot_mode == "separated") {
-          p <- ggplot(sub, aes(x = condition_grouped, y = mean_val)) +
-            (if (input$boxplot_fill_mode == "full") {
-              geom_boxplot(aes(fill = condition_grouped), width = 0.8, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-            } else {
-              geom_boxplot(fill = NA, width = 0.8, outlier.shape = NA, alpha = alpha_value, color = edge_col)
-            }) +
-            geom_jitter(aes(fill = condition_grouped), position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.2),
-                        size = 1.75, alpha = 0.4, shape = 21, color = edge_col) +
+          gg <- ggplot(sub, aes(x = condition_grouped, y = mean_val)) +
+            box_layer(aes(group = condition_grouped, fill = condition_grouped)) +
+            geom_jitter(
+              aes(fill = condition_grouped,
+                  text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal,
+                                "<br>Plate ID: ", plate_id, "<br>Phase: ", phase,
+                                "<br>Value: ", sprintf("%.2f", mean_val))),
+              position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.2),
+              size = 1.75, alpha = 0.4, shape = 21, color = edge_col
+            ) +
             facet_wrap(~phase, scales = "free_x") +
             scale_fill_manual(values = condition_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), caption = cap_text_boxplot_delta) +
+            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), caption = cap_box_de) +
             theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "none",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
-          
-          p_html <- ggplot(sub, aes(x = condition_grouped, y = mean_val,
-                                    text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal, "<br>Plate ID: ", plate_id,
-                                                  "<br>Phase: ", phase, "<br>Value: ", sprintf("%.2f", mean_val)))) +
-            (if (input$boxplot_fill_mode == "full") {
-              geom_boxplot(aes(fill = condition_grouped), position = position_dodge(width = 0.8), width = 0.7, outlier.shape = NA,
-                           alpha = alpha_value, color = edge_col)
-            } else {
-              geom_boxplot(fill = NA, position = position_dodge(width = 0.8), width = 0.7, outlier.shape = NA,
-                           alpha = alpha_value, color = edge_col)
-            }) +
-            geom_jitter(aes(fill = condition_grouped), position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.2),
-                        shape = 21, size = 1.75, alpha = 0.4, color = edge_col) +
-            facet_wrap(~phase, scales = "free_x", shrink = FALSE) +
-            scale_fill_manual(values = condition_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), caption = cap_text_boxplot_delta) +
-            theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "right",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
+            theme(legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(), plot.caption.position = "plot",
+                  plot.caption = element_text(hjust = 1))
+          return(gg)
         } else {
-          sub <- sub %>% tidyr::complete(condition_grouped, transition_phase, fill = list(mean_val = NA))
-          # Définir l'ordre des phases pour le mode "pooled"
+          sub <- tidyr::complete(sub, condition_grouped, transition_phase, fill = list(mean_val = NA))
           sub$transition_phase <- factor(sub$transition_phase,
-                                         levels = paste0(selected_transition, "_", c("before", "switch", "after")),
-                                         labels = c("Before", "Switch", "After"),
-                                         ordered = TRUE)
-          phase_colors <- trimws(unlist(strsplit(input$boxplot_delta_phase_colors, ",")))
-          p <- ggplot(sub, aes(x = condition_grouped, y = mean_val, fill = transition_phase)) +
-            geom_boxplot(position = position_dodge(width = dodge_width), width = 0.7, outlier.shape = NA,
-                         alpha = if (input$boxplot_fill_mode == "full") alpha_value else 0, color = edge_col) +
-            geom_jitter(aes(fill = transition_phase), position = position_jitterdodge(jitter.width = 0.2, dodge.width = dodge_width),
-                        shape = 21, color = edge_col, size = 1.75, alpha = 0.4) +
-            scale_fill_manual(values = phase_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), fill = "Phase", caption = cap_text_boxplot_delta) +
+                                         levels = paste0(tr, "_", c("before","switch","after")),
+                                         labels = c("Before","Switch","After"), ordered = TRUE)
+          phase_cols <- trimws(strsplit(input$boxplot_delta_phase_colors, ",")[[1]])
+          
+          gg <- ggplot(sub, aes(x = condition_grouped, y = mean_val)) +
+            box_layer(aes(group = interaction(condition_grouped, transition_phase),
+                          fill = transition_phase)) +
+            geom_jitter(
+              aes(fill = transition_phase,
+                  text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal,
+                                "<br>Plate ID: ", plate_id, "<br>Phase: ", transition_phase,
+                                "<br>Value: ", sprintf("%.2f", mean_val))),
+              position = position_jitterdodge(jitter.width = 0, dodge.width = 0.8),
+              shape = 21, color = edge_col, size = 1.75, alpha = 0.4
+            ) +
+            scale_fill_manual(values = phase_cols) +
+            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), fill = "Phase", caption = cap_box_de) +
             theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "right",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
-          p_html <- ggplot(sub, aes(x = condition_grouped, y = mean_val,
-                                    text = paste0("Tag: ", condition_tagged, "<br>Well: ", animal, "<br>Plate ID: ", plate_id,
-                                                  "<br>Phase: ", transition_phase, "<br>Value: ", sprintf("%.2f", mean_val)))) +
-            geom_boxplot(aes(fill = transition_phase), position = position_dodge(width = dodge_width), width = 0.7, outlier.shape = NA,
-                         alpha = if (input$boxplot_fill_mode == "full") alpha_value else 0, color = edge_col) +
-            geom_jitter(aes(fill = transition_phase), position = position_jitterdodge(jitter.width = 0, dodge.width = dodge_width),
-                        shape = 21, size = 1.75, alpha = 0.4, color = edge_col) +
-            scale_fill_manual(values = phase_colors) +
-            labs(y = sprintf("%s (Zone %s)", response_var, selected_zone), fill = "Phase", caption = cap_text_boxplot_delta) +
-            theme_obj +
-            theme(
-              plot.caption.position = "plot",
-              plot.caption = element_text(hjust = 1),
-              legend.position = "right",
-              axis.text.x = element_text(angle = 45, hjust = 1),
-              axis.title.x = element_blank()
-            )
+            theme(legend.position = "right", axis.text.x = element_text(angle = 45, hjust = 1),
+                  axis.title.x = element_blank(), plot.caption.position = "plot",
+                  plot.caption = element_text(hjust = 1))
+          return(gg)
         }
-        return(if (input$output_mode == "PNG") p else p_html)
-      } else if (plot_type == "lineplot") {
-        group_var <- if (lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
-        time_unit_label <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
-        sub[[group_var]] <- factor(sub[[group_var]], levels = condition_order)
-        p <- ggplot(sub, aes(x = start_rounded, y = val_per_well, color = .data[[group_var]], group = .data[[group_var]])) +
+      }
+      
+      # lineplot (unchanged)
+      if (plot_type == "lineplot") {
+        gvar <- if (lineplot_mode == "pooled") "condition_grouped" else "condition"
+        time_label <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
+        sub[[gvar]] <- factor(sub[[gvar]], levels = condition_order)
+        gg <- ggplot(sub, aes(x = start_rounded, y = val_per_well,
+                              color = .data[[gvar]], group = .data[[gvar]],
+                              text = paste0("Tag: ", .data[[gvar]], "<br>Time: ", sprintf("%.2f", start_rounded),
+                                            "<br>Total wells: ", n_wells, "<br>Value: ", sprintf("%.2f", val_per_well)))) +
           geom_line(linewidth = 0.8) +
           geom_point(size = 1.75) +
           scale_color_manual(values = condition_colors, breaks = condition_order) +
-          labs(x = sprintf("Time (%s)", time_unit_label), y = sprintf("%s (Zone %s)", response_var, selected_zone),
-               caption = cap_text_lineplot, color = if (lineplot_replicate_mode == "pooled") "Condition Grouped" else "Condition") +
+          labs(x = sprintf("Time (%s)", time_label),
+               y = sprintf("%s (Zone %s)", response_var, selected_zone),
+               caption = cap_line, color = if (lineplot_mode == "pooled") "Condition Grouped" else "Condition") +
           theme_obj +
-          theme(
-            plot.caption.position = "plot",
-            plot.caption = element_text(hjust = 1, margin = margin(t = 10)),
-            axis.text.x = element_text(angle = 45, hjust = 1)
-          )
-        p_html <- ggplot(sub, aes(x = start_rounded, y = val_per_well, color = .data[[group_var]], group = .data[[group_var]],
-                                  text = paste0("Tag: ", .data[[group_var]], "<br>Time: ", sprintf("%.2f", start_rounded), "<br>Total wells: ", n_wells,
-                                                "<br>Value: ", sprintf("%.2f", val_per_well)))) +
-          geom_line(linewidth = 0.8) +
-          geom_point(size = 1.75) +
-          scale_color_manual(values = condition_colors, breaks = condition_order) +
-          labs(x = sprintf("Time (%s)", time_unit_label), y = sprintf("%s (Zone %s)", response_var, selected_zone),
-               caption = cap_text_lineplot, color = if (lineplot_replicate_mode == "pooled") "Condition Grouped" else "Condition") +
-          theme_obj +
-          theme(
-            plot.caption.position = "plot",
-            plot.caption = element_text(hjust = 1, margin = margin(t = 10)),
-            axis.text.x = element_text(angle = 45, hjust = 1)
-          )
-        return(if (input$output_mode == "PNG") p else p_html)
+          theme(plot.caption.position = "plot", plot.caption = element_text(hjust = 1, margin = margin(t = 10)),
+                axis.text.x = element_text(angle = 45, hjust = 1))
+        return(gg)
       }
-    }    
+    }
     
-    observeEvent(input$generate_figure, {
-      tryCatch({
-        req(input$plot_type, input$selected_zone, input$response_var)
-        df <- switch(input$plot_type,
-                     "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
-                     "boxplot_cumulate" = rv$all_zone_combined_cum_boxplots[[input$response_var]],
-                     "boxplot_delta" = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-                     "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]])
-        req(df)
-        group_var <- if (input$plot_type == "lineplot" && input$lineplot_replicate_mode == "separated") "condition" else "condition_grouped"
-        condition_order <- if (nchar(input$condition_grouped_order) == 0) unique(df[[group_var]]) else trimws(unlist(strsplit(input$condition_grouped_order, ",")))
-        condition_colors <- if (nchar(input$condition_grouped_color) == 0) brewer.pal(n = length(unique(df[[group_var]])), name = "Set1") else trimws(unlist(strsplit(input$condition_grouped_color, ",")))
-        df[[group_var]] <- factor(df[[group_var]], levels = condition_order)
-        if (input$plot_type == "boxplot_light_dark") {
-          df$period_without_numbers <- factor(df$period_without_numbers, levels = c("light", "dark"), labels = c("Light period", "Dark period"))
-        }
-        add_console_message(sprintf("Generating %s figure for %s (Zone %s, %s theme)...", input$plot_type, input$response_var, input$selected_zone, input$theme_switch))
-        p <- generate_plot(
-          df = df,
-          response_var = input$response_var,
-          plot_type = input$plot_type,
-          boxplot_mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else "separated",
-          lineplot_replicate_mode = input$lineplot_replicate_mode,
-          selected_zone = input$selected_zone,
-          theme_choice = input$theme_switch,
-          condition_order = condition_order,
-          condition_colors = condition_colors
-        )
-        figure_key <- paste(
-          input$response_var,
-          input$selected_zone,
-          tolower(input$theme_switch),
-          if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          input$boxplot_fill_mode,
-          input$output_mode,
-          if (input$plot_type == "boxplot_delta") input$transition_select else "",
-          sep = "_"
-        )
-        rv$generated_figures[[figure_key]] <- list(
-          plot = p,
-          var = input$response_var,
-          zone = input$selected_zone,
-          theme = tolower(input$theme_switch),
-          mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          fill_mode = input$boxplot_fill_mode,
-          output_mode = input$output_mode,
-          transition = if (input$plot_type == "boxplot_delta") input$transition_select else NULL
-        )
-        rv$plot <- if (input$output_mode == "HTML") {
-          if ((input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") || (input$plot_type == "boxplot_delta" && input$boxplot_delta_mode == "pooled")) {
-            ggplotly(p, tooltip = "text") %>% layout(boxmode = "group")
-          } else {
-            ggplotly(p, tooltip = "text")
-          }
-        } else {
-          p
-        }
-        add_console_message(sprintf("%s figure for %s (Zone %s, %s theme, %s fill) generated.", input$plot_type, input$response_var, input$selected_zone, tolower(input$theme_switch), input$boxplot_fill_mode))
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", e$message))
-      })
-    })
-    
-    observeEvent(input$theme_switch, {
-      tryCatch({
-        req(input$plot_type, input$selected_zone, input$response_var, rv$plot)
-        df <- switch(input$plot_type,
-                     "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
-                     "boxplot_cumulate" = rv$all_zone_combined_cum_boxplots[[input$response_var]],
-                     "boxplot_delta" = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-                     "lineplot" = rv$all_zone_combined_lineplots[[input$response_var]])
-        req(df)
-        group_var <- if (input$plot_type == "lineplot" && input$lineplot_replicate_mode == "separated") "condition" else "condition_grouped"
-        condition_order <- if (nchar(input$condition_grouped_order) == 0) unique(df[[group_var]]) else trimws(unlist(strsplit(input$condition_grouped_order, ",")))
-        condition_colors <- if (nchar(input$condition_grouped_color) == 0) brewer.pal(n = length(unique(df[[group_var]])), name = "Set1") else trimws(unlist(strsplit(input$condition_grouped_color, ",")))
-        df[[group_var]] <- factor(df[[group_var]], levels = condition_order)
-        if (input$plot_type == "boxplot_light_dark") {
-          df$period_without_numbers <- factor(df$period_without_numbers, levels = c("light", "dark"), labels = c("Light period", "Dark period"))
-        }
-        p <- generate_plot(
-          df = df,
-          response_var = input$response_var,
-          plot_type = input$plot_type,
-          boxplot_mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else "separated",
-          lineplot_replicate_mode = input$lineplot_replicate_mode,
-          selected_zone = input$selected_zone,
-          theme_choice = input$theme_switch,
-          condition_order = condition_order,
-          condition_colors = condition_colors
-        )
-        figure_key <- paste(
-          input$response_var,
-          input$selected_zone,
-          tolower(input$theme_switch),
-          if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          input$boxplot_fill_mode,
-          input$output_mode,
-          if (input$plot_type == "boxplot_delta") input$transition_select else "",
-          sep = "_"
-        )
-        rv$generated_figures[[figure_key]] <- list(
-          plot = p,
-          var = input$response_var,
-          zone = input$selected_zone,
-          theme = tolower(input$theme_switch),
-          mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          fill_mode = input$boxplot_fill_mode,
-          output_mode = input$output_mode,
-          transition = if (input$plot_type == "boxplot_delta") input$transition_select else NULL
-        )
-        rv$plot <- if (input$output_mode == "HTML") {
-          if ((input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") || (input$plot_type == "boxplot_delta" && input$boxplot_delta_mode == "pooled")) {
-            ggplotly(p, tooltip = "text") %>% layout(boxmode = "group")
-          } else {
-            ggplotly(p, tooltip = "text")
-          }
-        } else {
-          p
-        }
-        add_console_message(sprintf("Theme switched to %s for %s (Zone %s, %s fill).", tolower(input$theme_switch), input$response_var, input$selected_zone, input$boxplot_fill_mode))
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", e$message))
-      })
-    })
-    
-    observeEvent(input$boxplot_fill_mode, {
-      tryCatch({
-        req(input$plot_type, input$selected_zone, input$response_var, rv$plot)
-        if (!input$plot_type %in% c("boxplot_light_dark", "boxplot_cumulate", "boxplot_delta")) {
-          return()
-        }
-        df <- switch(input$plot_type,
-                     "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
-                     "boxplot_cumulate" = rv$all_zone_combined_cum_boxplots[[input$response_var]],
-                     "boxplot_delta" = rv$all_zone_combined_delta_boxplots[[input$response_var]])
-        req(df)
-        group_var <- if (input$plot_type == "lineplot" && input$lineplot_replicate_mode == "separated") "condition" else "condition_grouped"
-        condition_order <- if (nchar(input$condition_grouped_order) == 0) unique(df[[group_var]]) else trimws(unlist(strsplit(input$condition_grouped_order, ",")))
-        condition_colors <- if (nchar(input$condition_grouped_color) == 0) brewer.pal(n = length(unique(df[[group_var]])), name = "Set1") else trimws(unlist(strsplit(input$condition_grouped_color, ",")))
-        df[[group_var]] <- factor(df[[group_var]], levels = condition_order)
-        if (input$plot_type == "boxplot_light_dark") {
-          df$period_without_numbers <- factor(df$period_without_numbers, levels = c("light", "dark"), labels = c("Light period", "Dark period"))
-        }
-        p <- generate_plot(
-          df = df,
-          response_var = input$response_var,
-          plot_type = input$plot_type,
-          boxplot_mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else "separated",
-          lineplot_replicate_mode = input$lineplot_replicate_mode,
-          selected_zone = input$selected_zone,
-          theme_choice = input$theme_switch,
-          condition_order = condition_order,
-          condition_colors = condition_colors
-        )
-        figure_key <- paste(
-          input$response_var,
-          input$selected_zone,
-          tolower(input$theme_switch),
-          if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          input$boxplot_fill_mode,
-          input$output_mode,
-          if (input$plot_type == "boxplot_delta") input$transition_select else "",
-          sep = "_"
-        )
-        rv$generated_figures[[figure_key]] <- list(
-          plot = p,
-          var = input$response_var,
-          zone = input$selected_zone,
-          theme = tolower(input$theme_switch),
-          mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode,
-          fill_mode = input$boxplot_fill_mode,
-          output_mode = input$output_mode,
-          transition = if (input$plot_type == "boxplot_delta") input$transition_select else NULL
-        )
-        rv$plot <- if (input$output_mode == "HTML") {
-          if ((input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") || (input$plot_type == "boxplot_delta" && input$boxplot_delta_mode == "pooled")) {
-            ggplotly(p, tooltip = "text") %>% layout(boxmode = "group")
-          } else {
-            ggplotly(p, tooltip = "text")
-          }
-        } else {
-          p
-        }
-        add_console_message(sprintf("Fill mode switched to %s for %s (Zone %s, %s theme).", input$boxplot_fill_mode, input$response_var, input$selected_zone, tolower(input$theme_switch)))
-      }, error = function(e) {
-        add_console_message(sprintf("Error: %s", e$message))
-      })
-    })
-    
-    # Auto-update du plot quand on change output_mode, boxplot_mode ou response_var
-    observeEvent(
-      list(
-        input$output_mode,
-        input$boxplot_light_dark_mode,
-        input$boxplot_delta_mode,
-        input$response_var
-      ),
-      {
-        tryCatch({
-          req(input$plot_type, input$selected_zone, input$response_var)
-          # 1) sélectionner le bon df
-          df <- switch(
-            input$plot_type,
-            "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
-            "boxplot_cumulate"   = rv$all_zone_combined_cum_boxplots[[input$response_var]],
-            "boxplot_delta"      = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-            "lineplot"           = rv$all_zone_combined_lineplots[[input$response_var]]
-          )
-          req(df)
-          # 2) recalculer condition_order & condition_colors
-          group_var <- if (input$plot_type=="lineplot" && input$lineplot_replicate_mode=="separated")
-            "condition" else "condition_grouped"
-          condition_order <- if (nzchar(input$condition_grouped_order))
-            trimws(strsplit(input$condition_grouped_order, ",")[[1]])
-          else unique(df[[group_var]])
-          condition_colors <- if (nzchar(input$condition_grouped_color))
-            trimws(strsplit(input$condition_grouped_color, ",")[[1]])
-          else RColorBrewer::brewer.pal(length(unique(df[[group_var]])), "Set1")
-          df[[group_var]] <- factor(df[[group_var]], levels = condition_order)
-          if (input$plot_type=="boxplot_light_dark") {
-            df$period_without_numbers <- factor(
-              df$period_without_numbers,
-              levels = c("light","dark"),
-              labels = c("Light period","Dark period")
-            )
-          }
-          # 3) générer le plot ggplot
-          p <- generate_plot(
-            df                      = df,
-            response_var            = input$response_var,
-            plot_type               = input$plot_type,
-            boxplot_mode            = if (input$plot_type=="boxplot_light_dark")
-              input$boxplot_light_dark_mode
-            else if (input$plot_type=="boxplot_delta")
-              input$boxplot_delta_mode
-            else "separated",
-            lineplot_replicate_mode = input$lineplot_replicate_mode,
-            selected_zone           = input$selected_zone,
-            theme_choice            = input$theme_switch,
-            condition_order         = condition_order,
-            condition_colors        = condition_colors
-          )
-          # 4) stocker dans rv$plot en PNG ou HTML
-          rv$plot <- if (input$output_mode=="HTML") {
-            if ((input$plot_type=="boxplot_light_dark" && input$boxplot_light_dark_mode=="pooled") ||
-                (input$plot_type=="boxplot_delta"      && input$boxplot_delta_mode=="pooled")) {
-              plotly::ggplotly(p, tooltip="text") %>% plotly::layout(boxmode="group")
-            } else {
-              plotly::ggplotly(p, tooltip="text")
-            }
-          } else {
-            p
-          }
-          add_console_message(sprintf(
-            "Auto-update: response_var=%s, boxplot_mode=%s, output_mode=%s — plot mis à jour",
-            input$response_var,
-            if (input$plot_type=="boxplot_light_dark")
-              input$boxplot_light_dark_mode else input$boxplot_delta_mode,
-            input$output_mode
-          ))
-        }, error = function(e) {
-          add_console_message(sprintf("Erreur auto-update: %s", e$message))
-        })
-      }
-    )
-    
-    observeEvent(input$plot_type, {
-      if (input$plot_type == "boxplot_delta") {
-        showTab(inputId = "output_tabs", target = "delta_percentage_tables", session = session)
-      } else {
-        hideTab(inputId = "output_tabs", target = "delta_percentage_tables", session = session)
-      }
-    })
-    
+    # ---------- Rebuild on output mode change (keeps HTML/PNG in sync) ----------
     observeEvent(input$output_mode, {
-      tryCatch({
-        req(input$plot_type, input$selected_zone, input$response_var, rv$generated_figures)
-        # Récupération du dataframe
-        df <- switch(input$plot_type,
-                     "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots[[input$response_var]],
-                     "boxplot_cumulate"    = rv$all_zone_combined_cum_boxplots[[input$response_var]],
-                     "boxplot_delta"       = rv$all_zone_combined_delta_boxplots[[input$response_var]],
-                     "lineplot"            = rv$all_zone_combined_lineplots[[input$response_var]])
-        req(df)
-        # Calcul des paramètres condition_order et condition_colors
-        group_var <- if (input$plot_type == "lineplot" && input$lineplot_replicate_mode == "separated") "condition" else "condition_grouped"
-        condition_order  <- if (nzchar(input$condition_grouped_order)) trimws(strsplit(input$condition_grouped_order, ",")[[1]]) else unique(df[[group_var]])
-        condition_colors <- if (nzchar(input$condition_grouped_color)) trimws(strsplit(input$condition_grouped_color, ",")[[1]]) else brewer.pal(length(unique(df[[group_var]])), "Set1")
-        df[[group_var]] <- factor(df[[group_var]], levels = condition_order)
-        if (input$plot_type == "boxplot_light_dark") {
-          df$period_without_numbers <- factor(df$period_without_numbers, levels = c("light", "dark"), labels = c("Light period", "Dark period"))
-        }
-        # Génération du ggplot brut
-        p <- generate_plot(
-          df                      = df,
-          response_var            = input$response_var,
-          plot_type               = input$plot_type,
-          boxplot_mode            = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode
-          else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode
-          else "separated",
-          lineplot_replicate_mode = input$lineplot_replicate_mode,
-          selected_zone           = input$selected_zone,
-          theme_choice            = input$theme_switch,
-          condition_order         = condition_order,
-          condition_colors        = condition_colors
-        )
-        # Mise à jour de rv$plot en fonction du mode
-        rv$plot <- if (input$output_mode == "HTML") {
-          if ((input$plot_type == "boxplot_light_dark" && input$boxplot_light_dark_mode == "pooled") ||
-              (input$plot_type == "boxplot_delta"       && input$boxplot_delta_mode == "pooled")) {
-            ggplotly(p, tooltip = "text") %>% layout(boxmode = "group")
-          } else {
-            ggplotly(p, tooltip = "text")
-          }
-        } else {
-          p
-        }
-        add_console_message(sprintf("Output mode changé en %s : graphique régénéré.", input$output_mode))
-      }, error = function(e) {
-        add_console_message(sprintf("Erreur lors du changement de output_mode : %s", e$message))
-      })
+      req(input$plot_type, input$selected_zone, input$response_var)
+      df <- get_df(); req(df)
+      oc <- order_and_colors(df)
+      boxmode <- if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode
+      else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode
+      else "separated"
+      p <- generate_plot(df, input$response_var, input$plot_type, boxmode,
+                         input$lineplot_replicate_mode, input$selected_zone, input$theme_switch,
+                         oc$order, oc$colors)
+      save_current_state(p)
+      log(sprintf("🔁 Output mode switched to %s.", input$output_mode))
     })
+    # end generate_plot
     
-    observeEvent(input$generate_delta_tables, {
-      add_console_message("-----")
-      add_console_message("🔄 Starting generation of delta percentage tables...")
-      tryCatch({
-        req(rv$all_zone_combined_delta_boxplots, input$transition_select)
-        
-        excel_output_dir <- file.path(tempdir(), "excel")
-        ensure_directory(excel_output_dir)
-        
-        percentage_diff_results_momentum <- list()
-        for (var in names(rv$all_zone_combined_delta_boxplots)) {
-          add_console_message(sprintf("📊 Calculating momentum percentage differences for %s...", var))
-          boxplot_data <- rv$all_zone_combined_delta_boxplots[[var]]
-          
-          results_momentum <- boxplot_data %>%
-            mutate(momentum = sub(".*_(before|switch|after)$", "\\1", transition_phase)) %>%
-            group_by(condition_grouped, zone) %>%
-            nest() %>%
-            mutate(
-              comparison_results = map(data, function(df) {
-                momentum_pairs <- list(
-                  c("before", "switch"),
-                  c("switch", "after"),
-                  c("before", "after")
-                )
-                map_dfr(momentum_pairs, function(pair) {
-                  m1 <- filter(df, momentum == pair[1])
-                  m2 <- filter(df, momentum == pair[2])
-                  if (nrow(m1) > 0 && nrow(m2) > 0) {
-                    tibble(
-                      momentum_comparison = paste(pair[1], pair[2], sep = "-"),
-                      mean_value_1 = round(mean(m1$mean_val, na.rm = TRUE), 2),
-                      mean_value_2 = round(mean(m2$mean_val, na.rm = TRUE), 2),
-                      median_value_1 = round(median(m1$mean_val, na.rm = TRUE), 2),
-                      median_value_2 = round(median(m2$mean_val, na.rm = TRUE), 2),
-                      mean_diff_pct = round((mean_value_2 - mean_value_1) / abs(mean_value_1) * 100, 2),
-                      median_diff_pct = round((median_value_2 - median_value_1) / abs(median_value_1) * 100, 2)
-                    )
-                  } else {
-                    tibble()
-                  }
-                })
-              })
-            ) %>%
-            unnest(comparison_results) %>%
-            select(-data)
-          
-          percentage_diff_results_momentum[[var]] <- results_momentum
-        }
-        
-        rv$percentage_diff_results_momentum <- percentage_diff_results_momentum
-        
-        wb_momentum <- createWorkbook()
-        for (var in names(percentage_diff_results_momentum)) {
-          addWorksheet(wb_momentum, var)
-          writeData(wb_momentum, var, percentage_diff_results_momentum[[var]])
-          
-          df_out <- percentage_diff_results_momentum[[var]]
-          n <- nrow(df_out)
-          if (n > 0) {
-            mean_col <- which(names(df_out) == "mean_diff_pct")
-            median_col <- which(names(df_out) == "median_diff_pct")
-            rows <- 2:(n + 1)
-            
-            if (length(mean_col)) {
-              conditionalFormatting(wb_momentum, var, cols = mean_col, rows = rows,
-                                    rule = ">0", style = createStyle(bgFill = "#b9ffb2"))
-              conditionalFormatting(wb_momentum, var, cols = mean_col, rows = rows,
-                                    rule = "<0", style = createStyle(bgFill = "#ffb2b2"))
-            }
-            if (length(median_col)) {
-              conditionalFormatting(wb_momentum, var, cols = median_col, rows = rows,
-                                    rule = ">0", style = createStyle(bgFill = "#b9ffb2"))
-              conditionalFormatting(wb_momentum, var, cols = median_col, rows = rows,
-                                    rule = "<0", style = createStyle(bgFill = "#ffb2b2"))
-            }
-          }
-        }
-        rv$delta_momentum_excel <- file.path(excel_output_dir, "delta_percentage_differences_momentum.xlsx")
-        saveWorkbook(wb_momentum, rv$delta_momentum_excel, overwrite = TRUE)
-        add_console_message(sprintf("🎉 Momentum delta pairwise differences saved to: %s", rv$delta_momentum_excel))
-        
-        percentage_diff_results_condition <- list()
-        for (var in names(rv$all_zone_combined_delta_boxplots)) {
-          add_console_message(sprintf("📊 Calculating condition percentage differences for %s...", var))
-          boxplot_data <- rv$all_zone_combined_delta_boxplots[[var]]
-          
-          results_condition <- boxplot_data %>%
-            mutate(momentum = sub(".*_(before|switch|after)$", "\\1", transition_phase)) %>%
-            group_by(momentum, zone) %>%
-            nest() %>%
-            mutate(
-              comparison_results = map(data, function(df) {
-                condition_pairs <- combn(unique(df$condition_grouped), 2, simplify = FALSE)
-                map_dfr(condition_pairs, function(pair) {
-                  c1 <- filter(df, condition_grouped == pair[1])
-                  c2 <- filter(df, condition_grouped == pair[2])
-                  if (nrow(c1) > 0 && nrow(c2) > 0) {
-                    tibble(
-                      condition_comparison = paste(pair[1], pair[2], sep = "-"),
-                      mean_value_1 = round(mean(c1$mean_val, na.rm = TRUE), 2),
-                      mean_value_2 = round(mean(c2$mean_val, na.rm = TRUE), 2),
-                      median_value_1 = round(median(c1$mean_val, na.rm = TRUE), 2),
-                      median_value_2 = round(median(c2$mean_val, na.rm = TRUE), 2),
-                      mean_diff_pct = round((mean_value_2 - mean_value_1) / abs(mean_value_1) * 100, 2),
-                      median_diff_pct = round((median_value_2 - median_value_1) / abs(median_value_1) * 100, 2)
-                    )
-                  } else {
-                    tibble()
-                  }
-                })
-              })
-            ) %>%
-            unnest(comparison_results) %>%
-            select(-data)
-          
-          percentage_diff_results_condition[[var]] <- results_condition
-        }
-        
-        rv$percentage_diff_results_condition <- percentage_diff_results_condition
-        
-        wb_condition <- createWorkbook()
-        for (var in names(percentage_diff_results_condition)) {
-          addWorksheet(wb_condition, var)
-          writeData(wb_condition, var, percentage_diff_results_condition[[var]])
-          
-          df_out <- percentage_diff_results_condition[[var]]
-          n <- nrow(df_out)
-          if (n > 0) {
-            mean_col <- which(names(df_out) == "mean_diff_pct")
-            median_col <- which(names(df_out) == "median_diff_pct")
-            rows <- 2:(n + 1)
-            
-            if (length(mean_col)) {
-              conditionalFormatting(wb_condition, var, cols = mean_col, rows = rows,
-                                    rule = ">0", style = createStyle(bgFill = "#b9ffb2"))
-              conditionalFormatting(wb_condition, var, cols = mean_col, rows = rows,
-                                    rule = "<0", style = createStyle(bgFill = "#ffb2b2"))
-            }
-            if (length(median_col)) {
-              conditionalFormatting(wb_condition, var, cols = median_col, rows = rows,
-                                    rule = ">0", style = createStyle(bgFill = "#b9ffb2"))
-              conditionalFormatting(wb_condition, var, cols = median_col, rows = rows,
-                                    rule = "<0", style = createStyle(bgFill = "#ffb2b2"))
-            }
-          }
-        }
-        rv$delta_condition_excel <- file.path(excel_output_dir, "delta_percentage_differences_condition.xlsx")
-        saveWorkbook(wb_condition, rv$delta_condition_excel, overwrite = TRUE)
-        add_console_message(sprintf("🎉 Condition delta pairwise differences saved to: %s", rv$delta_condition_excel))
-        
-        add_console_message("\n🎉 Delta percentage tables generation completed!\n")
-      }, error = function(e) {
-        add_console_message(sprintf("Error in delta percentage tables generation: %s", e$message))
-      })
-    })
-    
-    output$delta_percentage_table <- DT::renderDataTable({
-      req(input$delta_table_type, input$delta_table_var)
-      table_data <- if (input$delta_table_type == "Momentum Comparisons") {
-        rv$percentage_diff_results_momentum[[input$delta_table_var]]
-      } else {
-        rv$percentage_diff_results_condition[[input$delta_table_var]]
+    # ---------- Plot building (single place) ----------
+    make_plot <- function(log_it = FALSE) {
+      df <- get_df()
+      if (is.null(df) || is.null(input$response_var) || input$response_var == "") {
+        if (log_it) log("⚠️ Select a response variable and generate datasets first.")
+        return(invisible(NULL))
       }
-      req(table_data)
-      DT::datatable(
-        table_data,
-        options = list(pageLength = 10, scrollX = TRUE),
-        class = "display"
-      ) %>%
-        DT::formatStyle(
-          columns = c("mean_diff_pct", "median_diff_pct"),
-          backgroundColor = DT::styleInterval(
-            cuts   = 0,
-            values = c("#ffb2b2", "#b9ffb2")
-          )
-        )
-    })
+      
+      # zone de secours si l'UI n'est pas encore (re)rendue
+      selected_zone <- input$selected_zone
+      if (is.null(selected_zone) || !length(selected_zone)) {
+        zones <- sort(unique(df$zone))
+        if (!length(zones)) {
+          if (log_it) log("⚠️ No zones available in current dataset.")
+          return(invisible(NULL))
+        }
+        selected_zone <- as.character(zones[1])  # toujours character ici
+      }
+      
+      oc <- order_and_colors(df)
+      p <- generate_plot(
+        df = df,
+        response_var = input$response_var,
+        plot_type = input$plot_type,
+        boxplot_mode = if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode
+        else if (input$plot_type == "boxplot_delta")  input$boxplot_delta_mode
+        else "separated",
+        lineplot_mode = input$lineplot_replicate_mode,
+        selected_zone = selected_zone,
+        theme_choice = input$theme_switch,
+        condition_order = oc$order,
+        condition_colors = oc$colors
+      )
+      save_current_state(p)
+      if (log_it) log("🖼️ Figure generated.")
+      invisible(TRUE)
+    }
     
+    
+    observeEvent(input$generate_figure, { make_plot(log_it = TRUE) })
+    
+    # Auto-refresh on style / selection changes (sans spam de logs)
+    observeEvent(list(
+      input$theme_switch, input$boxplot_fill_mode, input$output_mode,
+      input$boxplot_light_dark_mode, input$boxplot_delta_mode,
+      input$response_var, input$selected_zone, input$lineplot_replicate_mode
+    ), {
+      if (!is.null(get_df())) make_plot(log_it = FALSE)
+    }, ignoreInit = TRUE)
+    
+    # ---------- Outputs ----------
     output$figure_plot <- renderUI({
       req(rv$plot)
-      if (input$output_mode == "HTML") {
-        plotlyOutput(ns("plotly_plot"), height = "600px")
-      } else {
-        plotOutput(ns("static_plot"), height = "600px")
-      }
+      if (input$output_mode == "HTML") plotlyOutput(ns("plotly_plot"), height = "600px")
+      else plotOutput(ns("static_plot"), height = "600px")
     })
+    output$plotly_plot <- renderPlotly({ req(rv$plot, input$output_mode == "HTML"); rv$plot })
+    output$static_plot <- renderPlot({ req(rv$plot, input$output_mode == "PNG"); rv$plot })
+    output$console_output <- renderUI({ HTML(paste(console_messages(), collapse = "<br>")) })
     
-    output$plotly_plot <- renderPlotly({
-      req(rv$plot, input$output_mode == "HTML")
-      rv$plot
-    })
-    
-    output$static_plot <- renderPlot({
-      req(rv$plot, input$output_mode == "PNG")
-      rv$plot
-    })
-    
-    output$console_output <- renderUI({
-      HTML(paste(console_messages(), collapse = "<br>"))
-    })
-    
-    observeEvent(input$download_all_for_type, {
-      # Reconstruire la liste des fichiers PNG à générer, exactement comme dans votre handler
-      tmp_dir <- file.path(tempdir(), paste0("all_figs_", input$plot_type))
-      dfs_list <- switch(input$plot_type,
-                         "boxplot_light_dark" = rv$all_zone_combined_light_dark_boxplots,
-                         "boxplot_cumulate"   = rv$all_zone_combined_cum_boxplots,
-                         "boxplot_delta"      = rv$all_zone_combined_delta_boxplots,
-                         "lineplot"           = rv$all_zone_combined_lineplots)
-      for (var in names(dfs_list)) {
-        df_var <- dfs_list[[var]]
-        for (z in sort(unique(df_var$zone))) {
-          fname <- sprintf("%s_%s_zone%s_%s_%s.png",
-                           input$plot_type, var, z,
-                           tolower(input$theme_switch),
-                           if (input$plot_type=="lineplot") input$lineplot_replicate_mode else input$boxplot_fill_mode)
-          # Ici on loggue le chemin complet
-          add_console_message(sprintf("✔️ PNG généré : %s/%s", tmp_dir, fname))
-        }
-      }
-    })
-    
-    
+    # ---------- Downloads (figure) ----------
     output$save_current_figure <- downloadHandler(
       filename = function() {
-        var <- input$response_var
-        zone <- input$selected_zone
-        theme <- tolower(input$theme_switch)
-        mode <- if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode
+        var <- input$response_var; zone <- input$selected_zone; theme <- tolower(input$theme_switch)
+        mode <- if (input$plot_type == "boxplot_light_dark") input$boxplot_light_dark_mode
+        else if (input$plot_type == "boxplot_delta") input$boxplot_delta_mode
+        else if (input$plot_type == "boxplot_cumulate") "separated" else input$lineplot_replicate_mode
         fill_mode <- input$boxplot_fill_mode
-        transition <- if (input$plot_type == "boxplot_delta") input$transition_select else ""
+        transition <- if (input$plot_type == "boxplot_delta") paste0("_", input$transition_select) else ""
+        ext <- if (input$output_mode == "HTML") "html" else "png"
         sprintf("%s_%s_zone%s_%s_%s_%s%s.%s",
-                input$plot_type, var, zone, theme, mode, fill_mode,
-                if (nchar(transition) > 0) paste0("_", transition) else "",
-                if (input$output_mode == "HTML") "html" else "png")
+                input$plot_type, var, zone, theme, mode, fill_mode, transition, ext)
       },
       content = function(file) {
         req(rv$plot)
         if (input$output_mode == "HTML") {
-          saveWidget(rv$plot, file, selfcontained = TRUE)
+          htmlwidgets::saveWidget(rv$plot, file, selfcontained = TRUE)
         } else {
-          ggsave(file, plot = rv$plot, width = 10, height = 6, dpi = 300)
+          ggplot2::ggsave(file, plot = rv$plot, width = 10, height = 6, dpi = 300)
         }
       }
     )
     
+    # ---------- Delta percentage tables ----------
+    observeEvent(input$generate_delta_tables, {
+      log("🔄 Generating delta percentage tables…")
+      tryCatch({
+        req(rv$all_zone_combined_delta_boxplots)
+        
+        # Momentum comparisons
+        build_momentum <- function(df) {
+          df %>%
+            dplyr::mutate(momentum = sub(".*_(before|switch|after)$", "\\1", transition_phase)) %>%
+            dplyr::group_by(condition_grouped, zone) %>%
+            tidyr::nest() %>%
+            dplyr::mutate(comparison_results = purrr::map(data, function(d) {
+              pairs <- list(c("before", "switch"), c("switch", "after"), c("before", "after"))
+              purrr::map_dfr(pairs, function(p) {
+                m1 <- dplyr::filter(d, momentum == p[1]); m2 <- dplyr::filter(d, momentum == p[2])
+                if (nrow(m1) * nrow(m2) == 0) return(tibble())
+                tibble(
+                  momentum_comparison = paste(p, collapse = "-"),
+                  mean_value_1   = round(mean(m1$mean_val, na.rm = TRUE), 2),
+                  mean_value_2   = round(mean(m2$mean_val, na.rm = TRUE), 2),
+                  median_value_1 = round(median(m1$mean_val, na.rm = TRUE), 2),
+                  median_value_2 = round(median(m2$mean_val, na.rm = TRUE), 2),
+                  mean_diff_pct   = round((mean_value_2 - mean_value_1) / abs(mean_value_1) * 100, 2),
+                  median_diff_pct = round((median_value_2 - median_value_1) / abs(median_value_1) * 100, 2)
+                )
+              })
+            })) %>%
+            tidyr::unnest(comparison_results) %>%
+            dplyr::select(-data)
+        }
+        
+        # Condition comparisons
+        build_condition <- function(df) {
+          df %>%
+            dplyr::mutate(momentum = sub(".*_(before|switch|after)$", "\\1", transition_phase)) %>%
+            dplyr::group_by(momentum, zone) %>%
+            tidyr::nest() %>%
+            dplyr::mutate(comparison_results = purrr::map(data, function(d) {
+              pairs <- combn(unique(d$condition_grouped), 2, simplify = FALSE)
+              purrr::map_dfr(pairs, function(p) {
+                c1 <- dplyr::filter(d, condition_grouped == p[1])
+                c2 <- dplyr::filter(d, condition_grouped == p[2])
+                if (nrow(c1) * nrow(c2) == 0) return(tibble())
+                tibble(
+                  condition_comparison = paste(p, collapse = "-"),
+                  mean_value_1   = round(mean(c1$mean_val, na.rm = TRUE), 2),
+                  mean_value_2   = round(mean(c2$mean_val, na.rm = TRUE), 2),
+                  median_value_1 = round(median(c1$mean_val, na.rm = TRUE), 2),
+                  median_value_2 = round(median(c2$mean_val, na.rm = TRUE), 2),
+                  mean_diff_pct   = round((mean_value_2 - mean_value_1) / abs(mean_value_1) * 100, 2),
+                  median_diff_pct = round((median_value_2 - median_value_1) / abs(median_value_1) * 100, 2)
+                )
+              })
+            })) %>%
+            tidyr::unnest(comparison_results) %>%
+            dplyr::select(-data)
+        }
+        
+        rv$percentage_diff_results_momentum  <- purrr::imap(rv$all_zone_combined_delta_boxplots, ~build_momentum(.x))
+        rv$percentage_diff_results_condition <- purrr::imap(rv$all_zone_combined_delta_boxplots, ~build_condition(.x))
+        
+        # Save two Excel files (one per family)
+        out_dir <- file.path(tempdir(), "excel"); ensure_directory(out_dir)
+        wb1 <- openxlsx::createWorkbook(); for (nm in names(rv$percentage_diff_results_momentum)) {
+          openxlsx::addWorksheet(wb1, nm)
+          openxlsx::writeData(wb1, nm, rv$percentage_diff_results_momentum[[nm]])
+        }
+        rv$delta_momentum_excel <- file.path(out_dir, "delta_percentage_differences_momentum.xlsx")
+        openxlsx::saveWorkbook(wb1, rv$delta_momentum_excel, overwrite = TRUE)
+        
+        wb2 <- openxlsx::createWorkbook(); for (nm in names(rv$percentage_diff_results_condition)) {
+          openxlsx::addWorksheet(wb2, nm)
+          openxlsx::writeData(wb2, nm, rv$percentage_diff_results_condition[[nm]])
+        }
+        rv$delta_condition_excel <- file.path(out_dir, "delta_percentage_differences_condition.xlsx")
+        openxlsx::saveWorkbook(wb2, rv$delta_condition_excel, overwrite = TRUE)
+        
+        log("🎉 Delta percentage tables generated (and saved).")
+      }, error = function(e) log(paste("❌ Delta tables generation failed:", e$message)))
+    })
+    
+    output$delta_percentage_table <- DT::renderDataTable({
+      req(input$delta_table_type, input$delta_table_var)
+      df <- if (input$delta_table_type == "Momentum Comparisons")
+        rv$percentage_diff_results_momentum[[input$delta_table_var]]
+      else
+        rv$percentage_diff_results_condition[[input$delta_table_var]]
+      req(df)
+      DT::datatable(df, options = list(pageLength = 10, scrollX = TRUE), class = "display") %>%
+        DT::formatStyle(
+          columns = c("mean_diff_pct", "median_diff_pct"),
+          backgroundColor = DT::styleInterval(0, c("#ffb2b2", "#b9ffb2"))
+        )
+    })
+    
+    # ---------- Downloads (datasets & tables) ----------
     output$download_current_dataset <- downloadHandler(
-      filename = function() {
-        sprintf("%s_dataset_%s.xlsx", input$dataset_type, input$dataset_response_var)
-      },
-      content = function(file) {
+      filename = function() sprintf("%s_dataset_%s.xlsx", input$dataset_type, input$dataset_response_var),
+      content  = function(file) {
         df <- switch(input$dataset_type,
                      "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots[[input$dataset_response_var]],
                      "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots[[input$dataset_response_var]],
-                     "Boxplot Delta" = rv$all_zone_combined_delta_boxplots[[input$dataset_response_var]],
-                     "Lineplot" = rv$all_zone_combined_lineplots[[input$dataset_response_var]])
-        req(df)
-        write_xlsx(df, file)
+                     "Boxplot Delta"      = rv$all_zone_combined_delta_boxplots[[input$dataset_response_var]],
+                     "Lineplot"           = rv$all_zone_combined_lineplots[[input$dataset_response_var]])
+        req(df); writexl::write_xlsx(df, file)
       }
     )
-    
     output$download_all_datasets <- downloadHandler(
-      filename = function() {
-        sprintf("all_datasets_%s.zip", format(Sys.time(), "%Y%m%d_%H%M%S"))
-      },
-      content = function(file) {
-        temp_dir <- tempdir()
-        dataset_dir <- file.path(temp_dir, "datasets")
-        ensure_directory(dataset_dir)
+      filename = function() sprintf("all_datasets_%s.zip", format(Sys.time(), "%Y%m%d_%H%M%S")),
+      content  = function(file) {
+        td <- tempdir(); ddir <- file.path(td, "datasets"); ensure_directory(ddir)
         files <- c()
-        
-        dataset_types <- list(
+        packs <- list(
           "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots,
           "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots,
-          "Boxplot Delta" = rv$all_zone_combined_delta_boxplots,
-          "Lineplot" = rv$all_zone_combined_lineplots
+          "Boxplot Delta"      = rv$all_zone_combined_delta_boxplots,
+          "Lineplot"           = rv$all_zone_combined_lineplots
         )
-        
-        for (type in names(dataset_types)) {
-          datasets <- dataset_types[[type]]
-          for (var in names(datasets)) {
-            df <- datasets[[var]]
-            if (!is.null(df)) {
-              filename <- sprintf("%s_dataset_%s.xlsx", type, var)
-              filepath <- file.path(dataset_dir, filename)
-              write_xlsx(df, filepath)
-              files <- c(files, filepath)
-            }
+        for (tp in names(packs)) for (v in names(packs[[tp]])) {
+          df <- packs[[tp]][[v]]; if (!is.null(df)) {
+            fp <- file.path(ddir, sprintf("%s_dataset_%s.xlsx", tp, v))
+            writexl::write_xlsx(df, fp); files <- c(files, fp)
           }
         }
-        
-        zip::zip(file, files = files, root = temp_dir)
+        zip::zip(file, files = files, root = td)
       },
       contentType = "application/zip"
     )
-    
     output$download_current_delta_table <- downloadHandler(
-      filename = function() {
-        sprintf("%s_%s.xlsx", input$delta_table_type, input$delta_table_var)
-      },
-      content = function(file) {
-        if (input$delta_table_type == "Momentum Comparisons") {
-          file.copy(rv$delta_momentum_excel, file)
-        } else {
-          file.copy(rv$delta_condition_excel, file)
-        }
+      filename = function() sprintf("%s_%s.xlsx", input$delta_table_type, input$delta_table_var),
+      content  = function(file) {
+        if (input$delta_table_type == "Momentum Comparisons") file.copy(rv$delta_momentum_excel,  file)
+        else                                                   file.copy(rv$delta_condition_excel, file)
       }
     )
-    
     output$download_all_delta_tables <- downloadHandler(
-      filename = function() {
-        sprintf("all_delta_tables_%s.zip", format(Sys.time(), "%Y%m%d_%H%M%S"))
-      },
-      content = function(file) {
-        temp_dir <- tempdir()
-        files <- c(rv$delta_momentum_excel, rv$delta_condition_excel)
-        zip::zip(file, files = files, root = temp_dir)
+      filename = function() sprintf("all_delta_tables_%s.zip", format(Sys.time(), "%Y%m%d_%H%M%S")),
+      content  = function(file) {
+        td <- tempdir(); files <- c(rv$delta_momentum_excel, rv$delta_condition_excel)
+        zip::zip(file, files = files, root = td)
       },
       contentType = "application/zip"
     )
   })
 }
+

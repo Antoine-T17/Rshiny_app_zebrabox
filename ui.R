@@ -16,7 +16,7 @@ base_theme <- create_theme(
   ),
   bs_vars_button(
     default_bg = "#2196F3",     # Couleur des boutons
-    default_color = "#FFF",     # Texte blanc
+    default_color = "#FFF",     # Texte blancb
     default_border = "#2196F3"  # Bordure bleue
   )
 )
@@ -79,19 +79,6 @@ header_styles <- tags$head(
     [data-theme="dark"] .dataTables_wrapper .dataTables_filter input, [data-theme="dark"] .dataTables_wrapper .dataTables_length select { background-color: #444 !important; color: #FFF !important; border: 1px solid #666 !important; }
     [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button { background-color: #444 !important; color: #FFF !important; }
     [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover { background-color: #2196F3 !important; color: #FFF !important; }
-
-    /* Styles spécifiques pour plotly en thème sombre */
-    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container { background-color: #2E2E2E !important; color: #FFF !important; }
-    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container .svg-container { background-color: #2E2E2E !important; }
-    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container text { fill: #FFF !important; }
-    [data-theme="dark"] .plotly .plotly .js-plotly-plot .plot-container .cartesianlayer .trace { color: #FFF !important; }
-
-    /* Animation underline pour titre principal (effet serpent glissant) */
-    .welcome-title { position: relative; display: inline-block; text-align: center; font-size: 3em; color: #2196F3; margin-bottom: 0.5em; overflow: hidden; }
-    .welcome-title::after { content: ""; position: absolute; left: -20%; bottom: -5px; width: 20%; height: 3px; background-color: #2196F3; animation: snake 4s ease-in-out infinite; }
-    @keyframes snake { 0% { left: -20%; } 100% { left: 100%; } } /* Glisse de gauche à droite et reset */
-    [data-theme="dark"] .welcome-title { color: #2196F3; }
-    [data-theme="dark"] .welcome-title::after { background-color: #2196F3; }
   ')),
   tags$script(HTML('
     function toggleTheme() {

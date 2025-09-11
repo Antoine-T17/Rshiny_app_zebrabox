@@ -444,7 +444,12 @@ processing_tm_ldm_server <- function(id, rv) {
           zone_combined <- process_zones(current_data, i)
           
           processed_data_list[[i]] <- zone_combined
-          boundary_associations_list[[i]] <- data.frame(time_switch = boundaries, transition = transitions)
+          boundary_associations_list[[i]] <- data.frame(
+            plate_id    = as.character(current_plan$plate_id[1]),
+            time_switch = boundaries,
+            transition  = transitions,
+            stringsAsFactors = FALSE
+          )
         }
         
         add_console_message("\n ✅ Data extraction, enrichment, and period assignment completed for all plates!")
