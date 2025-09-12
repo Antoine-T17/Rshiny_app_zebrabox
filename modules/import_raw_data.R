@@ -35,7 +35,6 @@ raw_data_ui <- function(id, primary_choices = c("Tracking Mode", "Quantization M
 }
 
 # ---- Server du module Raw Data ----
-# ---- Server du module Raw Data ----
 raw_data_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     # ---- Fonction utilitaire pour lire les fichiers ----
@@ -75,8 +74,6 @@ raw_data_server <- function(id, rv) {
       if (input$primary_mode != current_primary || input$secondary_mode != current_secondary) {
         rv$primary_mode <- input$primary_mode
         rv$secondary_mode <- input$secondary_mode
-        message("Debug: Updated rv$primary_mode to ", rv$primary_mode)
-        message("Debug: Updated rv$secondary_mode to ", rv$secondary_mode)
         showNotification("Modes updated successfully!", type = "message")
       }
     })

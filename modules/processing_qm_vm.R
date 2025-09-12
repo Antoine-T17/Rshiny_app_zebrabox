@@ -1,5 +1,5 @@
 # UI for Quantization Mode, Vibration-Rest Mode
-processing_qm_ldm_ui <- function(id) {
+processing_qm_vm_ui <- function(id) {
   ns <- NS(id)
   
   tagList(
@@ -43,7 +43,7 @@ processing_qm_ldm_ui <- function(id) {
 }
 
 # Server for Quantization Mode, Vibration-Rest Mode
-processing_qm_ldm_server <- function(id, rv) {
+processing_qm_vm_server <- function(id, rv) {
   moduleServer(id, function(input, output, session) {
     ns <- session$ns
     console_messages <- reactiveVal(character())

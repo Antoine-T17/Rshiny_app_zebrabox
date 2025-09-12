@@ -306,117 +306,6 @@ processing_qm_ldm_server <- function(id, rv) {
       current_data
     }
     
-    
-    remove_time_codes <- function(current_data, removal_row, i) {
-      add_console_message("-")
-      add_console_message(sprintf("Plate %d - Range of 'start column': [%.2f, %.2f]", i, min(current_data$start, na.rm = TRUE), max(current_data$start, na.rm = TRUE)))
-      
-      if (should_remove(removal_row$remove_time_codes)) {
-        time_codes_str <- as.character(removal_row$remove_time_codes)
-        time_codes_to_remove <- as.numeric(unlist(strsplit(time_codes_str, ",")))
-        if (length(time_codes_to_remove) > 0 && !any(is.na(time_codes_to_remove))) {
-          invalid_time_codes <- setdiff(time_codes_to_remove, current_data$start)
-          if (length(invalid_time_codes) > 0) {
-            add_console_message(sprintf("⚠️ Warning: Plate %d - The following time codes do not match any values in start: %s", i, paste(invalid_time_codes, collapse = ", ")))
-          }
-          time_codes_to_remove <- intersect(time_codes_to_remove, current_data$start)
-          if (length(time_codes_to_remove) > 0) {
-            add_console_message(sprintf("Plate %d - Removing time codes: %s", i, paste(time_codes_to_remove, collapse = ", ")))
-            current_data <- current_data[!current_data$start %in% time_codes_to_remove, ]
-          }
-        } else {
-          add_console_message(sprintf("⚠️ Warning: Plate %d - Invalid or empty time codes in remove_time_codes: %s", i, time_codes_str))
-        }
-      } else {
-        add_console_message(sprintf("Plate %d - No time codes to remove (user indicated 'no' or left blank).", i))
-      }
-      add_console_message(sprintf("✅ Plate %d - Done.", i))
-      current_data
-    }
-    
-    
-    remove_periods <- function(current_data, removal_row, i) {
-      add_console_message("-")
-      unique_periods <- unique(current_data$period_with_numbers)
-      add_console_message(sprintf("Plate %d - Unique periods assigned: %s", i, paste(unique_periods, collapse = ", ")))
-      
-      if (should_remove(removal_row$remove_periods)) {
-        periods_to_remove <- trimws(unlist(strsplit(removal_row$remove_periods, ",")))
-        if (length(periods_to_remove) > 0) {
-          invalid_periods <- setdiff(periods_to_remove, current_data$period_with_numbers)
-          if (length(invalid_periods) > 0) {
-            add_console_message(sprintf("⚠️ Warning: Plate %d - The following periods do not match any values in period_with_numbers: %s", i, paste(invalid_periods, collapse = ", ")))
-          }
-          periods_to_remove <- intersect(periods_to_remove, current_data$period_with_numbers)
-          if (length(periods_to_remove) > 0) {
-            add_console_message(sprintf("Plate %d - Removing periods: %s", i, paste(periods_to_remove, collapse = ", ")))
-            current_data <- current_data[!current_data$period_with_numbers %in% periods_to_remove, ]
-          }
-        }
-      } else {
-        add_console_message(sprintf("Plate %d - No periods to remove (user indicated 'no' or left blank).", i))
-      }
-      add_console_message(sprintf("✅ Plate %d - Done.", i))
-      current_data
-    }
-    
-    remove_wells <- function(current_data, removal_row, i) {
-      add_console_message("-")
-      if (should_remove(removal_row$remove_wells)) {
-        wells_str <- as.character(removal_row$remove_wells)
-        wells_to_remove <- trimws(unlist(strsplit(wells_str, ",")))
-        if (length(wells_to_remove) > 0 && !any(is.na(wells_to_remove))) {
-          invalid_wells <- setdiff(wells_to_remove, current_data$animal)
-          if (length(invalid_wells) > 0) {
-            add_console_message(sprintf("⚠️ Warning: Plate %d - The following wells do not match any values in animal: %s", i, paste(invalid_wells, collapse = ", ")))
-          }
-          wells_to_remove <- intersect(wells_to_remove, current_data$animal)
-          if (length(wells_to_remove) > 0) {
-            add_console_message(sprintf("Plate %d - Wells to remove: %s", i, paste(wells_to_remove, collapse = ", ")))
-            current_data <- current_data[!current_data$animal %in% wells_to_remove, ]
-          }
-        } else {
-          add_console_message(sprintf("⚠️ Warning: Plate %d - Invalid or empty wells in remove_wells: %s", i, wells_str))
-        }
-      } else {
-        add_console_message(sprintf("Plate %d - No wells to remove (user indicated 'no' or left blank).", i))
-      }
-      add_console_message(sprintf("✅ Plate %d - Done.", i))
-      current_data
-    }
-    
-    remove_conditions <- function(current_data, removal_row, i) {
-      add_console_message("-")
-      unique_condition_grouped <- unique(current_data$condition_grouped)
-      add_console_message(sprintf("Plate %d - Range of 'condition_grouped': %s", i, paste(unique_condition_grouped, collapse = ", ")))
-      
-      if (should_remove(removal_row$remove_conditions)) {
-        conditions_str <- as.character(removal_row$remove_conditions)
-        conditions_to_remove <- trimws(unlist(strsplit(conditions_str, ",")))
-        if (length(conditions_to_remove) > 0 && !any(is.na(conditions_to_remove))) {
-          if (!"condition" %in% colnames(current_data) || all(is.na(current_data$condition))) {
-            add_console_message(sprintf("❌ Error: Plate %d - 'condition' column is missing or empty. Cannot remove conditions.", i))
-          } else {
-            invalid_conditions <- setdiff(conditions_to_remove, current_data$condition)
-            if (length(invalid_conditions) > 0) {
-              add_console_message(sprintf("⚠️ Warning: Plate %d - The following conditions do not match any values in condition: %s", i, paste(invalid_conditions, collapse = ", ")))
-            }
-            conditions_to_remove <- intersect(conditions_to_remove, current_data$condition)
-            if (length(conditions_to_remove) > 0) {
-              add_console_message(sprintf("Plate %d - Removing conditions: %s", i, paste(conditions_to_remove, collapse = ", ")))
-              current_data <- current_data[!current_data$condition %in% conditions_to_remove, ]
-            }
-          }
-        } else {
-          add_console_message(sprintf("⚠️ Warning: Plate %d - Invalid or empty conditions in remove_conditions: %s", i, conditions_str))
-        }
-      } else {
-        add_console_message(sprintf("Plate %d - No conditions to remove (user indicated 'no' or left blank).", i))
-      }
-      add_console_message(sprintf("✅ Plate %d - Done.", i))
-      current_data
-    }
-    
     # Helper for processing zones
     process_zones <- function(current_data, i) {
       add_console_message("---")
@@ -447,7 +336,7 @@ processing_qm_ldm_server <- function(id, rv) {
       
       dplyr::bind_rows(processed_zones)
     }
-    
+
     observeEvent(input$run_processing, {
       tryCatch({
         if (is.null(input$period_file)) stop("Please upload the Period Transitions File (Excel).")
@@ -564,7 +453,12 @@ processing_qm_ldm_server <- function(id, rv) {
           zone_combined <- process_zones(current_data, i)
           
           processed_data_list[[i]] <- zone_combined
-          boundary_associations_list[[i]] <- data.frame(time_switch = boundaries, transition = transitions)
+          boundary_associations_list[[i]] <- data.frame(
+            plate_id    = as.character(current_plan$plate_id[1]),
+            time_switch = boundaries,
+            transition  = transitions,
+            stringsAsFactors = FALSE
+          )
         }
         
         add_console_message("\n ✅ Data extraction, enrichment, and period assignment completed for all plates!")
