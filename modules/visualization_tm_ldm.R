@@ -60,7 +60,7 @@ visualization_tm_ldm_ui <- function(id) {
       # One unified response variable selector for all plot types
       selectInput(ns("response_var"), "Response Variable", choices = "", selected = ""),
       
-      # --- LIGHT/DARK datasets
+      # --- Light/Dark datasets
       conditionalPanel(
         condition = cond("plot_type","boxplot_light_dark"),
         actionButton(ns("generate_light_dark_dfs"), "Generate Light/Dark Datasets"),
@@ -165,8 +165,7 @@ visualization_tm_ldm_ui <- function(id) {
                  selectInput(ns("dataset_response_var"), "Response Variable", choices = "", selected = ""),
                  DT::dataTableOutput(ns("dataset_table")),
                  div(style="margin-top:10px; margin-bottom:10px;",
-                     downloadButton(ns("download_current_dataset"), "Download Current Dataset (.xlsx)"),
-                     downloadButton(ns("download_all_datasets"), "Download All Datasets (.zip)"))),
+                     downloadButton(ns("download_current_dataset"), "Download Current Dataset (.xlsx)"))),
         
         tabPanel("Console Output",
                  div(style="background-color:#f5f5f5;border:1px solid #ccc;padding:10px;height:600px;overflow-y:auto;font-family:monospace;",
@@ -194,7 +193,7 @@ visualization_tm_ldm_server <- function(id, rv) {
     ns <- session$ns
     
     # ---- Expected TM/LDM variables (single source of truth) ----------
-    TMLDM_EXPECTED <- c(
+    TMVM_EXPECTED <- c(
       "totaldist","totaldur","totalct","totalspeed",
       "lardist","lardur","larct","larspeed",
       "smldist","smldur","smlct","smlspeed",
@@ -341,12 +340,12 @@ visualization_tm_ldm_server <- function(id, rv) {
     }
     
     # Initialize menus once UI is fully flushed
-    session$onFlushed(function() update_response_choices(TMLDM_EXPECTED), once = TRUE)
+    session$onFlushed(function() update_response_choices(TMVM_EXPECTED), once = TRUE)
     # Re-sync menus after dataset generation
     observeEvent(
       list(input$generate_light_dark_dfs, input$generate_cumulate_dfs,
            input$generate_delta_dfs,       input$generate_lineplot_dfs),
-      { update_response_choices(TMLDM_EXPECTED) },
+      { update_response_choices(TMVM_EXPECTED) },
       ignoreInit = TRUE
     )
     
@@ -376,7 +375,7 @@ visualization_tm_ldm_server <- function(id, rv) {
             .groups = "drop"
           )
         
-        rv$all_zone_combined_light_dark_boxplots <- setNames(lapply(TMLDM_EXPECTED, calc), TMLDM_EXPECTED)
+        rv$all_zone_combined_light_dark_boxplots <- setNames(lapply(TMVM_EXPECTED, calc), TMVM_EXPECTED)
         log("✅ Light/Dark datasets created.")
       }, error = function(e) log(paste("❌ Light/Dark generation failed:", e$message)))
     })
@@ -389,7 +388,7 @@ visualization_tm_ldm_server <- function(id, rv) {
           dplyr::group_by(condition_grouped, zone, plate_id, animal) %>%
           dplyr::summarise(cum = sum(.data[[v]], na.rm = TRUE),
                            condition_tagged = dplyr::first(condition_tagged), .groups = "drop")
-        rv$all_zone_combined_cum_boxplots <- setNames(lapply(TMLDM_EXPECTED, calc), TMLDM_EXPECTED)
+        rv$all_zone_combined_cum_boxplots <- setNames(lapply(TMVM_EXPECTED, calc), TMVM_EXPECTED)
         log("✅ Cumulative datasets created.")
       }, error = function(e) log(paste("❌ Cumulative generation failed:", e$message)))
     })
@@ -429,7 +428,7 @@ visualization_tm_ldm_server <- function(id, rv) {
         if (!nrow(joined)) return(log("⚠️ No data in requested delta windows."))
         
         phased_long <- tidyr::pivot_longer(
-          joined, cols = tidyselect::all_of(TMLDM_EXPECTED),
+          joined, cols = tidyselect::all_of(TMVM_EXPECTED),
           names_to = "variable", values_to = "value"
         ) %>%
           dplyr::group_by(transition_phase, zone, condition_tagged, plate_id, animal, variable) %>%
@@ -479,7 +478,7 @@ visualization_tm_ldm_server <- function(id, rv) {
             )
         }
         
-        rv$all_zone_combined_lineplots <- setNames(lapply(TMLDM_EXPECTED, calc), TMLDM_EXPECTED)
+        rv$all_zone_combined_lineplots <- setNames(lapply(TMVM_EXPECTED, calc), TMVM_EXPECTED)
         log("✅ Lineplot datasets created (normalized per well).")
       }, error = function(e) log(paste("❌ Lineplot generation failed:", e$message)))
     })
@@ -912,30 +911,6 @@ visualization_tm_ldm_server <- function(id, rv) {
         req(df)
         writexl::write_xlsx(df, file)
       }
-    )
-    
-    output$download_all_datasets <- downloadHandler(
-      filename = function() sprintf("all_datasets_%s.zip", format(Sys.time(), "%Y%m%d_%H%M%S")),
-      content  = function(file) {
-        td <- tempdir(); ddir <- file.path(td, "datasets"); ensure_directory(ddir)
-        files <- c()
-        packs <- list(
-          "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots,
-          "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots,
-          "Boxplot Delta"      = rv$all_zone_combined_delta_boxplots,
-          "Lineplot"           = rv$all_zone_combined_lineplots
-        )
-        for (tp in names(packs)) for (v in names(packs[[tp]])) {
-          df <- packs[[tp]][[v]]
-          if (!is.null(df)) {
-            fp <- file.path(ddir, sprintf("%s_dataset_%s.xlsx", tp, v))
-            writexl::write_xlsx(df, fp)
-            files <- c(files, fp)
-          }
-        }
-        zip::zip(file, files = files, root = td)
-      },
-      contentType = "application/zip"
     )
     
     output$download_current_delta_table <- downloadHandler(

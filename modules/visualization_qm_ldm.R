@@ -165,8 +165,7 @@ visualization_qm_ldm_ui <- function(id) {
                  selectInput(ns("dataset_response_var"), "Response Variable", choices = "", selected = ""),
                  DT::dataTableOutput(ns("dataset_table")),
                  div(style="margin-top:10px; margin-bottom:10px;",
-                     downloadButton(ns("download_current_dataset"), "Download Current Dataset (.xlsx)"),
-                     downloadButton(ns("download_all_datasets"), "Download All Datasets (.zip)"))),
+                     downloadButton(ns("download_current_dataset"), "Download Current Dataset (.xlsx)"))),
         
         tabPanel("Console Output",
                  div(style="background-color:#f5f5f5;border:1px solid #ccc;padding:10px;height:600px;overflow-y:auto;font-family:monospace;",
@@ -907,30 +906,6 @@ visualization_qm_ldm_server <- function(id, rv) {
         req(df)
         writexl::write_xlsx(df, file)
       }
-    )
-    
-    output$download_all_datasets <- downloadHandler(
-      filename = function() sprintf("all_datasets_%s.zip", format(Sys.time(), "%Y%m%d_%H%M%S")),
-      content  = function(file) {
-        td <- tempdir(); ddir <- file.path(td, "datasets"); ensure_directory(ddir)
-        files <- c()
-        packs <- list(
-          "Boxplot Light/Dark" = rv$all_zone_combined_light_dark_boxplots,
-          "Boxplot Cumulative" = rv$all_zone_combined_cum_boxplots,
-          "Boxplot Delta"      = rv$all_zone_combined_delta_boxplots,
-          "Lineplot"           = rv$all_zone_combined_lineplots
-        )
-        for (tp in names(packs)) for (v in names(packs[[tp]])) {
-          df <- packs[[tp]][[v]]
-          if (!is.null(df)) {
-            fp <- file.path(ddir, sprintf("%s_dataset_%s.xlsx", tp, v))
-            writexl::write_xlsx(df, fp)
-            files <- c(files, fp)
-          }
-        }
-        zip::zip(file, files = files, root = td)
-      },
-      contentType = "application/zip"
     )
     
     output$download_current_delta_table <- downloadHandler(
