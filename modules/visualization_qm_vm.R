@@ -194,7 +194,7 @@ visualization_qm_ldm_server <- function(id, rv) {
     ns <- session$ns
     
     # ---- Expected QM/LDM variables (single source of truth) ----------
-    QMLDM_EXPECTED <- c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg")
+    QMVM_EXPECTED <- c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg")
     
     # ---- Console helpers ---------------------------------------------
     console_messages <- reactiveVal("👋 Ready.")
@@ -336,12 +336,12 @@ visualization_qm_ldm_server <- function(id, rv) {
     }
     
     # Initialize menus once UI is fully flushed
-    session$onFlushed(function() update_response_choices(QMLDM_EXPECTED), once = TRUE)
+    session$onFlushed(function() update_response_choices(QMVM_EXPECTED), once = TRUE)
     # Re-sync menus after dataset generation
     observeEvent(
       list(input$generate_rest_vibration_dfs, input$generate_cumulate_dfs,
            input$generate_delta_dfs,       input$generate_lineplot_dfs),
-      { update_response_choices(QMLDM_EXPECTED) },
+      { update_response_choices(QMVM_EXPECTED) },
       ignoreInit = TRUE
     )
     
@@ -371,7 +371,7 @@ visualization_qm_ldm_server <- function(id, rv) {
             .groups = "drop"
           )
         
-        rv$all_zone_combined_rest_vibration_boxplots <- setNames(lapply(QMLDM_EXPECTED, calc), QMLDM_EXPECTED)
+        rv$all_zone_combined_rest_vibration_boxplots <- setNames(lapply(QMVM_EXPECTED, calc), QMVM_EXPECTED)
         log("✅ Rest/Vibration datasets created.")
       }, error = function(e) log(paste("❌ Rest/Vibration generation failed:", e$message)))
     })
@@ -384,7 +384,7 @@ visualization_qm_ldm_server <- function(id, rv) {
           dplyr::group_by(condition_grouped, zone, plate_id, animal) %>%
           dplyr::summarise(cum = sum(.data[[v]], na.rm = TRUE),
                            condition_tagged = dplyr::first(condition_tagged), .groups = "drop")
-        rv$all_zone_combined_cum_boxplots <- setNames(lapply(QMLDM_EXPECTED, calc), QMLDM_EXPECTED)
+        rv$all_zone_combined_cum_boxplots <- setNames(lapply(QMVM_EXPECTED, calc), QMVM_EXPECTED)
         log("✅ Cumulative datasets created.")
       }, error = function(e) log(paste("❌ Cumulative generation failed:", e$message)))
     })
@@ -424,7 +424,7 @@ visualization_qm_ldm_server <- function(id, rv) {
         if (!nrow(joined)) return(log("⚠️ No data in requested delta windows."))
         
         phased_long <- tidyr::pivot_longer(
-          joined, cols = tidyselect::all_of(QMLDM_EXPECTED),
+          joined, cols = tidyselect::all_of(QMVM_EXPECTED),
           names_to = "variable", values_to = "value"
         ) %>%
           dplyr::group_by(transition_phase, zone, condition_tagged, plate_id, animal, variable) %>%
@@ -474,7 +474,7 @@ visualization_qm_ldm_server <- function(id, rv) {
             )
         }
         
-        rv$all_zone_combined_lineplots <- setNames(lapply(QMLDM_EXPECTED, calc), QMLDM_EXPECTED)
+        rv$all_zone_combined_lineplots <- setNames(lapply(QMVM_EXPECTED, calc), QMVM_EXPECTED)
         log("✅ Lineplot datasets created (normalized per well).")
       }, error = function(e) log(paste("❌ Lineplot generation failed:", e$message)))
     })

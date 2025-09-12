@@ -194,7 +194,7 @@ visualization_tm_ldm_server <- function(id, rv) {
     ns <- session$ns
     
     # ---- Expected TM/LDM variables (single source of truth) ----------
-    TMLDM_EXPECTED <- c(
+    TMVM_EXPECTED <- c(
       "totaldist","totaldur","totalct","totalspeed",
       "lardist","lardur","larct","larspeed",
       "smldist","smldur","smlct","smlspeed",
@@ -341,12 +341,12 @@ visualization_tm_ldm_server <- function(id, rv) {
     }
     
     # Initialize menus once UI is fully flushed
-    session$onFlushed(function() update_response_choices(TMLDM_EXPECTED), once = TRUE)
+    session$onFlushed(function() update_response_choices(TMVM_EXPECTED), once = TRUE)
     # Re-sync menus after dataset generation
     observeEvent(
       list(input$generate_rest_vibration_dfs, input$generate_cumulate_dfs,
            input$generate_delta_dfs,       input$generate_lineplot_dfs),
-      { update_response_choices(TMLDM_EXPECTED) },
+      { update_response_choices(TMVM_EXPECTED) },
       ignoreInit = TRUE
     )
     
@@ -376,7 +376,7 @@ visualization_tm_ldm_server <- function(id, rv) {
             .groups = "drop"
           )
         
-        rv$all_zone_combined_rest_vibration_boxplots <- setNames(lapply(TMLDM_EXPECTED, calc), TMLDM_EXPECTED)
+        rv$all_zone_combined_rest_vibration_boxplots <- setNames(lapply(TMVM_EXPECTED, calc), TMVM_EXPECTED)
         log("✅ Rest/Vibration datasets created.")
       }, error = function(e) log(paste("❌ Rest/Vibration generation failed:", e$message)))
     })
@@ -389,7 +389,7 @@ visualization_tm_ldm_server <- function(id, rv) {
           dplyr::group_by(condition_grouped, zone, plate_id, animal) %>%
           dplyr::summarise(cum = sum(.data[[v]], na.rm = TRUE),
                            condition_tagged = dplyr::first(condition_tagged), .groups = "drop")
-        rv$all_zone_combined_cum_boxplots <- setNames(lapply(TMLDM_EXPECTED, calc), TMLDM_EXPECTED)
+        rv$all_zone_combined_cum_boxplots <- setNames(lapply(TMVM_EXPECTED, calc), TMVM_EXPECTED)
         log("✅ Cumulative datasets created.")
       }, error = function(e) log(paste("❌ Cumulative generation failed:", e$message)))
     })
@@ -429,7 +429,7 @@ visualization_tm_ldm_server <- function(id, rv) {
         if (!nrow(joined)) return(log("⚠️ No data in requested delta windows."))
         
         phased_long <- tidyr::pivot_longer(
-          joined, cols = tidyselect::all_of(TMLDM_EXPECTED),
+          joined, cols = tidyselect::all_of(TMVM_EXPECTED),
           names_to = "variable", values_to = "value"
         ) %>%
           dplyr::group_by(transition_phase, zone, condition_tagged, plate_id, animal, variable) %>%
@@ -479,7 +479,7 @@ visualization_tm_ldm_server <- function(id, rv) {
             )
         }
         
-        rv$all_zone_combined_lineplots <- setNames(lapply(TMLDM_EXPECTED, calc), TMLDM_EXPECTED)
+        rv$all_zone_combined_lineplots <- setNames(lapply(TMVM_EXPECTED, calc), TMVM_EXPECTED)
         log("✅ Lineplot datasets created (normalized per well).")
       }, error = function(e) log(paste("❌ Lineplot generation failed:", e$message)))
     })
