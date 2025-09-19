@@ -1,118 +1,172 @@
-library(shiny)
-library(shinydashboard)
-library(shinyjs)
+# ======================================================================
+# server.R
+# Server logic (runs once per user session)
+# ======================================================================
 
 server <- function(input, output, session) {
-  # Valeurs réactives globales (inchangé, mais trié pour clarté)
-  rv <- reactiveValues(
-    plate_plan_df_list               = NULL,
-    raw_data_list                    = NULL,
-    enriched_data_list               = NULL,
-    zone_calculated_list             = NULL,
-    all_zone_combined_df             = NULL,
-    all_zone_combined_lineplots      = NULL,
+  
+  # ------------------------------------------------------------------
+  # Reactive Values (per-session global store)
+  # ------------------------------------------------------------------
+  rv <- shiny::reactiveValues(
+    plate_plan_df_list                   = NULL,
+    raw_data_list                        = NULL,
+    enriched_data_list                   = NULL,
+    zone_calculated_list                 = NULL,
+    all_zone_combined_df                 = NULL,
+    all_zone_combined_lineplots          = NULL,
     all_zone_combined_light_dark_boxplots = NULL,
-    all_zone_combined_cum_boxplots   = NULL,
-    all_zone_combined_delta_boxplots = NULL,
-    plot                             = NULL,
-    primary_mode                     = NULL,
-    secondary_mode                   = NULL,
-    generated_figures                = list(),
-    processing_server_called         = FALSE,
-    visualization_server_called      = FALSE
+    all_zone_combined_cum_boxplots       = NULL,
+    all_zone_combined_delta_boxplots     = NULL,
+    plot                                 = NULL,
+    primary_mode                         = NULL,
+    secondary_mode                       = NULL,
+    generated_figures                    = list(),
+    # track started visualization servers by mode (named logical)
+    visualization_started                = list()
   )
   
-  # Helper pour le message d'attente statique (factorisé pour réutilisation)
-  waiting_message_ui <- function() {
-    fluidRow(
-      column(width = 12, align = "center",
-             h3("Still waiting for primary and secondary modes...", style = "color: #2196F3; font-style: italic;"),
-             icon("coffee", class = "fa-3x", style = "margin-top: 1em;"),
-             div(style = "margin-bottom: 20px;"),  # Espace ajouté entre l'icône et le texte
-             p("Go fill them in the Raw Data Tab", style = "font-size: 1.2em;")
-      )
-    )
-  }
-  
-  # Modules toujours appelés
+  # ------------------------------------------------------------------
+  # Always-Loaded Modules (created once per session)
+  # ------------------------------------------------------------------
   plate_plan_server("plate_plan", rv)
   raw_data_server("raw_data", rv)
   
-  # Helper réactive pour calculer le mode une seule fois
-  get_mode <- reactive({
-    req(rv$primary_mode, rv$secondary_mode)
-    primary <- ifelse(rv$primary_mode == "Tracking Mode", "tm", "qm")
+  # ------------------------------------------------------------------
+  # Helper Reactive: Build Mode Identifier
+  # ------------------------------------------------------------------
+  get_mode <- shiny::reactive({
+    # treat NULL or empty strings as "no selection"
+    is_missing <- function(x) is.null(x) || (is.character(x) && nzchar(trimws(x)) == FALSE)
+    if (is_missing(rv$primary_mode) || is_missing(rv$secondary_mode)) return(NULL)
+    
+    primary   <- ifelse(rv$primary_mode == "Tracking Mode", "tm", "qm")
     secondary <- ifelse(rv$secondary_mode == "Light Dark Mode", "ldm", "vm")
     paste(primary, secondary, sep = "_")
   })
   
-  # UI dynamiques processing
-  output$processing_ui <- renderUI({
-    if (is.null(rv$primary_mode) || is.null(rv$secondary_mode)) {
-      waiting_message_ui()  # Affiche le message fun
-    } else {
-      mode <- get_mode()  # Utilise ton helper get_mode() existant
-      switch(mode,
-             "tm_ldm" = processing_tm_ldm_ui("processing"),
-             "tm_vm"  = processing_tm_vm_ui("processing"),
-             "qm_ldm" = processing_qm_ldm_ui("processing"),
-             "qm_vm"  = processing_qm_vm_ui("processing"),
-             processing_tm_ldm_ui("processing")  # Default
-      )
+  # ------------------------------------------------------------------
+  # Create the processing module ONCE and pass a function that returns
+  # the current config at runtime (so module can be instantiated early
+  # even when modes are not set).
+  # ------------------------------------------------------------------
+  processing_module_server(
+    "processing",
+    rv,
+    config = function() {
+      m <- get_mode()
+      if (is.null(m)) stop("Processing mode not set. Please select primary + secondary mode in Raw Data tab.")
+      get_processing_config(m)
     }
+  )
+  
+  # ------------------------------------------------------------------
+  # Dynamic UI: Processing
+  # ------------------------------------------------------------------
+  output$processing_ui <- shiny::renderUI({
+    tryCatch({
+      if (is.null(rv$primary_mode) || is.null(rv$secondary_mode)) return(waiting_message_ui())
+      mode <- get_mode()
+      shiny::req(mode)
+      cfg <- get_processing_config(mode)
+      processing_module_ui("processing", cfg)
+    }, error = function(e) {
+      shiny::wellPanel(shiny::h4("Processing UI error"), shiny::pre(e$message))
+    })
   })
   
-  # UI dynamiques visualization
-  output$visualization_ui <- renderUI({
-    if (is.null(rv$primary_mode) || is.null(rv$secondary_mode)) {
-      waiting_message_ui()  # Affiche le message fun
-    } else {
-      mode <- get_mode()  # Utilise ton helper get_mode() existant
+  # ------------------------------------------------------------------
+  # Dynamic UI: Visualization
+  # ------------------------------------------------------------------
+  output$visualization_ui <- shiny::renderUI({
+    tryCatch({
+      if (is.null(rv$primary_mode) || is.null(rv$secondary_mode)) return(waiting_message_ui())
+      mode <- get_mode()
+      shiny::req(mode)
       switch(mode,
              "tm_ldm" = visualization_tm_ldm_ui("visualization"),
              "tm_vm"  = visualization_tm_vm_ui("visualization"),
              "qm_ldm" = visualization_qm_ldm_ui("visualization"),
              "qm_vm"  = visualization_qm_vm_ui("visualization"),
-             visualization_tm_ldm_ui("visualization")  # Default
+             visualization_tm_ldm_ui("visualization")
       )
-    }
+    }, error = function(e) {
+      shiny::wellPanel(shiny::h4("Visualization UI error"), shiny::pre(e$message))
+    })
   })
   
-  # Serveurs dynamiques (appelés une fois via observeEvent sur mode)
-  observeEvent(get_mode(), {
+  # ------------------------------------------------------------------
+  # Start corresponding visualization server ONCE per mode
+  # ------------------------------------------------------------------
+  shiny::observeEvent(get_mode(), {
     mode <- get_mode()
-    if (!rv$processing_server_called) {
-      switch(mode,
-             "tm_ldm" = processing_tm_ldm_server("processing", rv),
-             "tm_vm"  = processing_tm_vm_server("processing", rv),
-             "qm_ldm" = processing_qm_ldm_server("processing", rv),
-             "qm_vm"  = processing_qm_vm_server("processing", rv),
-             processing_tm_ldm_server("processing", rv)  # Default
-      )
-      rv$processing_server_called <- TRUE
-    }
+    if (is.null(mode)) return(NULL)
     
-    if (!rv$visualization_server_called) {
+    # start only if not started already for this mode
+    if (is.null(rv$visualization_started[[mode]]) || !isTRUE(rv$visualization_started[[mode]])) {
       switch(mode,
              "tm_ldm" = visualization_tm_ldm_server("visualization", rv),
              "tm_vm"  = visualization_tm_vm_server("visualization", rv),
              "qm_ldm" = visualization_qm_ldm_server("visualization", rv),
              "qm_vm"  = visualization_qm_vm_server("visualization", rv),
-             visualization_tm_ldm_server("visualization", rv)  # Default
+             visualization_tm_ldm_server("visualization", rv)
       )
-      rv$visualization_server_called <- TRUE
+      rv$visualization_started[[mode]] <- TRUE
     }
+  }, ignoreNULL = TRUE)
+  
+  # ------------------------------------------------------------------
+  # Exit Button
+  # ------------------------------------------------------------------
+  shiny::observeEvent(input$exit_app, {
+    shiny::stopApp()
   })
   
-  # Gestion du bouton Exit
-  observeEvent(input$exit_app, {
-    stopApp()
+  # ------------------------------------------------------------------
+  # Reset Button (Full Reset of data/state). IMPORTANT:
+  # - Clear data state so UI returns to initial state.
+  # - Do NOT recreate module servers here (that would cause duplicate observers).
+  # ------------------------------------------------------------------
+  shiny::observeEvent(input$reset_app, {
+    # Clear data-related reactive values
+    rv$plate_plan_df_list                   <- NULL
+    rv$raw_data_list                        <- NULL
+    rv$enriched_data_list                   <- NULL
+    rv$zone_calculated_list                 <- NULL
+    rv$all_zone_combined_df                 <- NULL
+    rv$all_zone_combined_lineplots          <- NULL
+    rv$all_zone_combined_light_dark_boxplots <- NULL
+    rv$all_zone_combined_cum_boxplots       <- NULL
+    rv$all_zone_combined_delta_boxplots     <- NULL
+    rv$plot                                 <- NULL
+    rv$primary_mode                         <- NULL
+    rv$secondary_mode                       <- NULL
+    rv$generated_figures                    <- list()
+    rv$processing_results <- NULL
+    rv$ordered_plate_plans <- NULL
+    rv$mapping <- NULL
+    
+    # Note: do NOT reset rv$visualization_started (keep modules created once per session).
+    # Reset inputs in the UI (module namespaces)
+    shinyjs::reset("plate_plan-plate_plan_files")
+    shinyjs::reset("raw_data-raw_data_files")
+    
+    shiny::updateSelectInput(session, "raw_data-primary_mode", selected = "")
+    shiny::updateSelectInput(session, "raw_data-secondary_mode", selected = "")
+    
+    shiny::updateSelectInput(session, "plate_plan-create_plate_plan", selected = "")
+    shiny::updateSelectInput(session, "plate_plan-plate_type", selected = "")
+    shiny::updateSelectInput(session, "plate_plan-keep_border_wells", selected = "")
+    
+    shiny::updateNumericInput(session, "plate_plan-plate_number", value = 1)
+    shiny::updateNumericInput(session, "plate_plan-conditions_number", value = 1)
+    shiny::updateNumericInput(session, "plate_plan-replicates_number", value = 1)
+    shiny::updateNumericInput(session, "plate_plan-units_per_replicate", value = 1)
+    shiny::updateNumericInput(session, "plate_plan-seed_value", value = 42)
+    
+    shiny::updateTextInput(session, "plate_plan-conditions_name", value = "")
+    shiny::updateTextInput(session, "plate_plan-plate_plan_name_xlsx", value = "plate_plan")
+    
+    shiny::showNotification("Application fully reset — please reload your plate plans, raw data and modes.", type = "message")
   })
-  
-  # Debug modes (conditionné pour dev only)
-  debug_mode <- TRUE  # Set to FALSE in prod
-  if (debug_mode) {
-    observe({ message("primary_mode → ", rv$primary_mode) })
-    observe({ message("secondary_mode → ", rv$secondary_mode) })
-  }
 }
