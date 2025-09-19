@@ -60,7 +60,7 @@ visualization_qm_ldm_ui <- function(id) {
       # One unified response variable selector for all plot types
       selectInput(ns("response_var"), "Response Variable", choices = "", selected = ""),
       
-      # --- LIGHT/DARK datasets
+      # --- BOXPLOTS LIGHT/DARK datasets
       conditionalPanel(
         condition = cond("plot_type","boxplot_light_dark"),
         actionButton(ns("generate_light_dark_dfs"), "Generate Light/Dark Datasets"),
@@ -74,14 +74,14 @@ visualization_qm_ldm_ui <- function(id) {
         )
       ),
       
-      # --- CUMULATIVE datasets
+      # --- BOXPLOTS CUMULATIVE datasets
       conditionalPanel(
         condition = cond("plot_type","boxplot_cumulate"),
         actionButton(ns("generate_cumulate_dfs"), "Generate Cumulative Datasets"),
         div(style = "margin-bottom:30px;")
       ),
       
-      # --- DELTA datasets
+      # --- BOXPLOTS DELTA datasets
       conditionalPanel(
         condition = cond("plot_type","boxplot_delta"),
         uiOutput(ns("transition_select_ui")),
@@ -114,6 +114,9 @@ visualization_qm_ldm_ui <- function(id) {
         actionButton(ns("generate_lineplot_dfs"), "Generate Lineplot Datasets"),
         div(style = "margin-bottom:30px;")
       ),
+      radioButtons(ns("lineplot_error_mode"), "Error Representation",
+                   c("Error Bars" = "error_bar", "95% CI" = "ci95"),
+                   "error_bar", inline = TRUE),
       
       # --- Boxplots fill mode
       conditionalPanel(
@@ -459,18 +462,26 @@ visualization_qm_ldm_server <- function(id, rv) {
           agg_unit <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
           agg_s    <- convert_time(as.numeric(input$aggregation_period), agg_unit, "seconds")
           gv <- if (input$lineplot_replicate_mode == "pooled") "condition_grouped" else "condition"
+          
           az %>%
             dplyr::mutate(start_rounded = floor(start / agg_s) * agg_s) %>%
             dplyr::group_by(.data[[gv]], zone, start_rounded, animal) %>%
             dplyr::summarise(var_value = sum(.data[[v]], na.rm = TRUE), .groups = "drop") %>%
             dplyr::group_by(.data[[gv]], zone, start_rounded) %>%
-            dplyr::summarise(total_val = sum(var_value, na.rm = TRUE), .groups = "drop") %>%
+            dplyr::summarise(
+              total_val   = sum(var_value, na.rm = TRUE),
+              sd_per_well = stats::sd(var_value, na.rm = TRUE),
+              n           = dplyr::n(),
+              .groups = "drop"
+            ) %>%
             dplyr::left_join(wells, by = c(gv, "zone")) %>%
             dplyr::mutate(
-              val_per_well = total_val / n_wells,
+              val_per_well  = total_val / n_wells,
+              se_per_well   = sd_per_well / sqrt(pmax(n, 1)),
               start_rounded = if (input$time_unit_original != agg_unit)
                 convert_time(start_rounded, "seconds", agg_unit) else start_rounded
-            )
+            ) %>%
+            dplyr::select(-n)   
         }
         
         rv$all_zone_combined_lineplots <- setNames(lapply(QMLDM_EXPECTED, calc), QMLDM_EXPECTED)
@@ -670,21 +681,65 @@ visualization_qm_ldm_server <- function(id, rv) {
         time_label <- if (input$time_unit_convert == "Yes") input$time_unit_target else input$time_unit_original
         sub[[gvar]] <- factor(sub[[gvar]], levels = condition_order)
         
-        gg <- ggplot(sub, aes(x = start_rounded, y = val_per_well,
-                              color = .data[[gvar]], group = .data[[gvar]],
-                              text = paste0("Tag: ", .data[[gvar]], "<br>Time: ", sprintf("%.2f", start_rounded),
-                                            "<br>Total wells: ", n_wells, "<br>Value: ", sprintf("%.2f", val_per_well)))) +
-          geom_line(linewidth = 0.8) +
+        gg <- ggplot(
+          sub,
+          aes(
+            x = start_rounded, y = val_per_well,
+            color = .data[[gvar]], group = .data[[gvar]],
+            text = paste0("Tag: ", .data[[gvar]],
+                          "<br>Time: ", sprintf("%.2f", start_rounded),
+                          "<br>Total wells: ", n_wells,
+                          "<br>Value: ", sprintf("%.2f", val_per_well))
+          )
+        )
+        
+        # --- Error representation (Error Bars vs 95% CI) ----------------------
+        if ("se_per_well" %in% names(sub)) {
+          if (input$lineplot_error_mode == "error_bar") {
+            gg <- gg +
+              geom_errorbar(
+                aes(
+                  ymin = val_per_well - se_per_well,
+                  ymax = val_per_well + se_per_well,
+                  color = .data[[gvar]]
+                ),
+                width = 0.15, linewidth = 0.5, alpha = 0.7
+              )
+          } else if (input$lineplot_error_mode == "ci95") {
+            gg <- gg +
+              geom_ribbon(
+                aes(
+                  x = start_rounded,
+                  ymin = val_per_well - 1.96 * se_per_well,
+                  ymax = val_per_well + 1.96 * se_per_well,
+                  fill = .data[[gvar]]
+                ),
+                alpha = 0.2, color = NA, inherit.aes = FALSE
+              ) +
+              scale_fill_manual(values = condition_colors, breaks = condition_order)
+          }
+        }
+        
+        # --- Points & Lines ---------------------------------------------------
+        gg <- gg + 
           geom_point(size = 1.75) +
+          geom_line(linewidth = 0.8)
+        
+        gg <- gg +
           scale_color_manual(values = condition_colors, breaks = condition_order) +
-          labs(x = sprintf("Time (%s)", time_label),
-               y = sprintf("%s (Zone %s)", response_var, selected_zone),
-               caption = cap_line,
-               color = if (lineplot_mode == "pooled") "Condition Grouped" else "Condition") +
+          labs(
+            x = sprintf("Time (%s)", time_label),
+            y = sprintf("%s (Zone %s)", response_var, selected_zone),
+            caption = cap_line,
+            color = if (lineplot_mode == "pooled") "Condition Grouped" else "Condition"
+          ) +
           theme_obj +
-          theme(plot.caption.position = "plot",
-                plot.caption = element_text(hjust = 1, margin = margin(t = 10)),
-                axis.text.x = element_text(angle = 45, hjust = 1))
+          theme(
+            plot.caption.position = "plot",
+            plot.caption = element_text(hjust = 1, margin = margin(t = 10)),
+            axis.text.x = element_text(angle = 45, hjust = 1)
+          )
+        
         return(gg)
       }
     }
@@ -745,7 +800,8 @@ visualization_qm_ldm_server <- function(id, rv) {
     observeEvent(list(
       input$theme_switch, input$boxplot_fill_mode, input$output_mode,
       input$boxplot_light_dark_mode, input$boxplot_delta_mode,
-      input$response_var, input$selected_zone, input$lineplot_replicate_mode
+      input$response_var, input$selected_zone, input$lineplot_replicate_mode,
+      input$lineplot_error_mode
     ), {
       if (!is.null(get_df())) make_plot(log_it = FALSE)
     }, ignoreInit = TRUE)
