@@ -190,8 +190,8 @@ plate_plan_server <- function(id, rv) {
           DT::datatable(rv$plate_plan_df_list[[i]],
                         filter = "top",
                         options = list(pageLength = 25, autoWidth = TRUE, orderClasses = TRUE)
-                        )
-          })
+          )
+        })
       })
     })
     

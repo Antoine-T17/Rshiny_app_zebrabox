@@ -61,6 +61,29 @@ header_styles <- shiny::tags$head(
     .exit-button-circle:hover {
       background-color: #861810;
     }
+    
+    /* ================== CONSOLE UNIFORME (verbatimTextOutput) ================== */
+    .console-container pre {
+      background-color: #FFF !important;
+      color: #000 !important;
+      border: 1px solid #ccc !important;
+      padding: 12px !important;
+      border-radius: 6px !important;
+      font-family: monospace !important;
+      font-size: 0.95em !important;
+      margin: 0 !important;
+      white-space: pre-wrap !important;
+      word-wrap: break-word !important;
+      height: 100% !important;
+      overflow: auto !important;
+    }
+    
+    [data-theme="dark"] .console-container pre {
+      background-color: #2E2E2E !important;
+      color: #FFF !important;
+      border: 1px solid #444 !important;
+    }
+        
 
     /* ================== LIGHT THEME ================== */
     .main-header { background-color: #FFF !important; color: #000 !important; }  /* header bar */
@@ -168,6 +191,9 @@ header_styles <- shiny::tags$head(
   '))
 )
 
+file.copy("my_sticker_without_border.png", "www/my_sticker_without_border.png", overwrite = TRUE)
+file.copy("viewpoint_logo_remove_background.png", "www/viewpoint_logo_remove_background.png", overwrite = TRUE)
+
 # ======================================================================
 # 3) Dashboard Header
 # ======================================================================
@@ -225,22 +251,130 @@ sidebar_content <- shinydashboard::dashboardSidebar(
 )
 
 # ======================================================================
-# 5) Welcome Tab Content
+# 5) Welcome Tab Content (logos PNG + dark mode texte)
 # ======================================================================
 welcome_content <- shinydashboard::tabItem(
   tabName = "welcome",
+  
+  # ====================== CSS Animations + Dark Mode ======================
+  shiny::tags$head(
+    shiny::tags$style(shiny::HTML('
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+      .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+      .logo-fade { opacity: 0; animation-delay: 0.3s; }
+
+      /* Ligne fine */
+      .footer-line {
+        width: 80%;
+        max-width: 700px;
+        height: 1px;
+        background: #ddd;
+        margin: 50px auto;
+        border: none;
+      }
+      [data-theme="dark"] .footer-line { background: #555; }
+
+      /* Sous-titre blanc en dark mode */
+      .welcome-subtitle {
+        color: #555;
+        transition: color 0.4s ease;
+      }
+      [data-theme="dark"] .welcome-subtitle { color: #e0e0e0 !important; }
+
+      /* Footer */
+      .app-footer {
+        margin-top: 30px;
+        padding: 20px 0 30px 0;
+        text-align: center;
+        font-size: 0.95em;
+        color: #777;
+        transition: color 0.4s ease;
+      }
+      [data-theme="dark"] .app-footer { color: #aaa; }
+      .app-footer a {
+        color: #2196F3;
+        text-decoration: none;
+        font-weight: 500;
+      }
+      .app-footer a:hover { text-decoration: underline; }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .logo-fade { gap: 30px; }
+        .logo-fade img { height: 100px !important; width: auto; }
+        .footer-line { width: 90%; }
+      }
+    '))
+  ),
+  
+  # ====================== Main ======================
   shiny::fluidRow(
     shiny::column(
       width = 12, align = "center",
-      shiny::h1("Welcome to Zebrabox Experiment Pipeline", class = "welcome-title"),
+      
+      # Title
+      shiny::h1(
+        "Welcome to Zebrabox Experiment Pipeline",
+        class = "welcome-title",
+        style = "font-size: 2.4em; font-weight: 700; margin: 20px 0 8px 0;"
+      ),
+      
+      # Subtitle
       shiny::p(
-        "This application allows you to generate randomized plate layouts, 
-        import and process raw data, and visualize results in multiple modes.",
-        style = "font-size: 1.4em; line-height: 1.6; margin-bottom: 2em; text-align: center; font-style: italic;"
+        "Generate randomized plate layouts, import and process raw data, and visualize results in multiple modes.",
+        class = "welcome-subtitle",
+        style = "
+          font-size: 1.38em; line-height: 1.6; margin-bottom: 35px; 
+          max-width: 920px; margin-left: auto; margin-right: auto; 
+          font-style: italic;
+        "
+      ),
+      
+      # Logos 
+      shiny::div(
+        class = "fade-in logo-fade",
+        style = "
+          display: flex; justify-content: center; align-items: center; 
+          gap: 60px; margin: 30px 0 60px 0; flex-wrap: wrap; opacity: 0;
+        ",
+        
+        # My sticker
+        shiny::a(
+          href = "https://www.linkedin.com/in/antoine-tourret-b70672175/", target = "_blank",
+          style = "text-decoration: none;",
+          shiny::tags$img(
+            src = "my_sticker_without_border.png",
+            style = "
+              height: 130px; width: auto; transition: transform 0.4s ease;
+              filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            ",
+            onmouseover = "this.style.transform='scale(1.12)'",
+            onmouseout  = "this.style.transform='scale(1)'"
+          )
+        ),
+        
+        # Logo ViewPoint (PNG)
+        shiny::a(
+          href = "https://www.viewpoint.fr/", target = "_blank",
+          style = "text-decoration: none;",
+          shiny::tags$img(
+            src = "viewpoint_logo_remove_background.png",
+            style = "
+              height: 115px; width: auto; transition: transform 0.4s ease;
+              filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+            ",
+            onmouseover = "this.style.transform='scale(1.12)'",
+            onmouseout  = "this.style.transform='scale(1)'"
+          )
+        )
       )
     )
   ),
-  # Feature overview boxes
+  
+  # ====================== Pannels ======================
   shiny::fluidRow(
     shiny::column(width = 3, shinydashboard::box(
       width = NULL, status = "primary",
@@ -273,9 +407,32 @@ welcome_content <- shinydashboard::tabItem(
       shiny::div(class = "details", shiny::p("Export as .png or interactive .html for detailed hovering and exploration."))
     ))
   ),
+  
+  # ====================== Navigation + Footer ======================
   shiny::fluidRow(
-    shiny::column(width = 12, align = "center",
-                  shiny::p("Use the left-hand menu to navigate.", style = "font-size: 1.2em; margin-top: 2em; font-style: italic;")
+    shiny::column(
+      width = 12, align = "center",
+      shiny::p(
+        "Use the left-hand menu to navigate.",
+        style = "font-size: 1.2em; margin-top: 2.8em; font-style: italic; color: #777;"
+      ),
+      
+      shiny::hr(class = "footer-line"),
+      
+      shiny::div(
+        class = "app-footer",
+        shiny::HTML("
+          <div>
+            Powered by 
+            <a href='https://www.viewpoint.fr/' target='_blank'>ViewPoint Behavior Technology</a>
+            Developed by 
+            <a href='https://www.linkedin.com/in/antoine-tourret-b70672175/' target='_blank'>Antoine Tourret</a>
+          </div>
+          <div style='margin-top: 8px; font-size: 0.9em;'>
+            © 2025 Zebrabox Pipeline • v1.0
+          </div>
+        ")
+      )
     )
   )
 )
@@ -288,12 +445,13 @@ dashboard_body <- shinydashboard::dashboardBody(
   header_styles,
   shinydashboard::tabItems(
     welcome_content,
-    shinydashboard::tabItem(tabName = "plate_plan", plate_plan_ui("plate_plan")),
-    shinydashboard::tabItem(tabName = "raw_data", raw_data_ui("raw_data")),
-    shinydashboard::tabItem(tabName = "processing", shiny::uiOutput("processing_ui")),
+    shinydashboard::tabItem(tabName = "plate_plan",    plate_plan_ui("plate_plan")),
+    shinydashboard::tabItem(tabName = "raw_data",      raw_data_ui("raw_data")),
+    shinydashboard::tabItem(tabName = "processing",    shiny::uiOutput("processing_ui")),
     shinydashboard::tabItem(tabName = "visualization", shiny::uiOutput("visualization_ui"))
   )
 )
+
 
 # ======================================================================
 # 7) Assemble Full Dashboard

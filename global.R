@@ -22,7 +22,7 @@ load_or_install <- function(pkgs) {
 required_pkgs <- c(
   "shiny", "shinyjs", "shinydashboard",
   "bslib", "sass", "readxl", "openxlsx",
-  "dplyr", "ggplot2", "plotly", "htmlwidgets", "DT",
+  "dplyr", "ggplot2", "ggforce", "plotly", "htmlwidgets", "DT",
   "zip", "scales", "rhandsontable", "shinyjqui",
   "stringr", "RColorBrewer", "writexl", "purrr", "tidyr", "fmsb"
 )
@@ -101,7 +101,6 @@ processing_config <- list(
 
 # Return a configuration list used by the generic processing module
 get_processing_config <- function(mode) {
-  # helper period mapping functions
   ldm_period_map <- function(x) {
     dplyr::case_when(
       stringr::str_detect(x, "^light") ~ "light",
@@ -118,7 +117,6 @@ get_processing_config <- function(mode) {
     )
   }
   
-  # filter function for QM modes (keep only rows with "quantauc" in datatype)
   qm_filter_fn <- function(df) {
     if ("datatype" %in% colnames(df) && any(stringr::str_detect(df$datatype, "quantauc"))) {
       dplyr::filter(df, stringr::str_detect(datatype, "quantauc"))
@@ -131,6 +129,7 @@ get_processing_config <- function(mode) {
          "tm_ldm" = list(
            ui_title        = "Tracking Mode, Light-Dark Mode",
            period_map      = ldm_period_map,
+           period_keys     = c("light", "dark"),       # déjà là
            convert_cols    = c("inact","inadur","inadist","smlct","smldist","smldur","larct","lardur","lardist","emptyct","emptydur","period"),
            zone_num_cols   = c("inact","inadur","inadist","smlct","smldist","smldur","larct","lardur","lardist","emptyct","emptydur"),
            filter_fn       = NULL
@@ -138,6 +137,7 @@ get_processing_config <- function(mode) {
          "tm_vm" = list(
            ui_title        = "Tracking Mode, Vibration-Rest Mode",
            period_map      = vm_period_map,
+           period_keys     = c("vibration", "rest"),   # déjà là
            convert_cols    = c("inact","inadur","inadist","smlct","smldist","smldur","larct","lardur","lardist","emptyct","emptydur","period"),
            zone_num_cols   = c("inact","inadur","inadist","smlct","smldist","smldur","larct","lardur","lardist","emptyct","emptydur"),
            filter_fn       = NULL
@@ -145,6 +145,7 @@ get_processing_config <- function(mode) {
          "qm_ldm" = list(
            ui_title        = "Quantization Mode, Light-Dark Mode",
            period_map      = ldm_period_map,
+           period_keys     = c("light", "dark"),       # AJOUTÉ
            convert_cols    = c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg","period"),
            zone_num_cols   = c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg"),
            filter_fn       = qm_filter_fn
@@ -152,20 +153,115 @@ get_processing_config <- function(mode) {
          "qm_vm" = list(
            ui_title        = "Quantization Mode, Vibration-Rest Mode",
            period_map      = vm_period_map,
+           period_keys     = c("vibration", "rest"),   # AJOUTÉ
            convert_cols    = c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg","period"),
            zone_num_cols   = c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg"),
            filter_fn       = qm_filter_fn
          ),
-         # default fallback
          list(
            ui_title        = "Tracking Mode, Light-Dark Mode",
            period_map      = ldm_period_map,
+           period_keys     = c("light", "dark"),
            convert_cols    = c("inact","inadur","inadist","smlct","smldist","smldur","larct","lardur","lardist","emptyct","emptydur","period"),
            zone_num_cols   = c("inact","inadur","inadist","smlct","smldist","smldur","larct","lardur","lardist","emptyct","emptydur"),
            filter_fn       = NULL
          )
   )
 }
+
+# ======================================================================
+# Visualization config (which response vars & period labels per mode)
+# ======================================================================
+
+get_visualization_config <- function(mode) {
+  # Expected metric sets
+  tm_expected <- c(
+    "totaldist","totaldur","totalct","totalspeed",
+    "lardist","lardur","larct","larspeed",
+    "smldist","smldur","smlct","smlspeed",
+    "inadist","inadur","inact","emptydur","emptyct"
+  )
+  qm_expected <- c("frect","fredur","midct","middur","burct","burdur","zerct","zerdur","actinteg")
+  
+  # Label helpers
+  ldm_period_keys   <- c("light","dark")
+  ldm_period_labels <- c("Light period","Dark period")
+  vm_period_keys    <- c("vibration","rest")
+  vm_period_labels  <- c("Vibration period","Rest period")
+  
+  switch(mode,
+         "tm_ldm" = list(
+           ui_title             = "Tracking Mode, Light-Dark Mode",
+           expected_vars        = tm_expected,
+           period_keys          = ldm_period_keys,
+           period_labels        = ldm_period_labels,
+           period_ui_name       = "Light/Dark",
+           period_default_colors = "#FFC300,#B3AAAA"
+         ),
+         "tm_vm" = list(
+           ui_title             = "Tracking Mode, Vibration-Rest Mode",
+           expected_vars        = tm_expected,
+           period_keys          = vm_period_keys,
+           period_labels        = vm_period_labels,
+           period_ui_name       = "Vibration/Rest",
+           period_default_colors = "#5E81AC,#A3BE8C"
+         ),
+         "qm_ldm" = list(
+           ui_title             = "Quantization Mode, Light-Dark Mode",
+           expected_vars        = qm_expected,
+           period_keys          = ldm_period_keys,
+           period_labels        = ldm_period_labels,
+           period_ui_name       = "Light/Dark",
+           period_default_colors = "#FFC300,#B3AAAA"
+         ),
+         "qm_vm" = list(
+           ui_title             = "Quantization Mode, Vibration-Rest Mode",
+           expected_vars        = qm_expected,
+           period_keys          = vm_period_keys,
+           period_labels        = vm_period_labels,
+           period_ui_name       = "Vibration/Rest",
+           period_default_colors = "#5E81AC,#A3BE8C"
+         ),
+         # fallback
+         list(
+           ui_title             = "Tracking Mode, Light-Dark Mode",
+           expected_vars        = tm_expected,
+           period_keys          = ldm_period_keys,
+           period_labels        = ldm_period_labels,
+           period_ui_name       = "Light/Dark",
+           period_default_colors = "#FFC300,#B3AAAA"
+         )
+  )
+}
+
+# ----------------------------------------------------------------------
+# Time conversion utility (used by visualization module)
+# ----------------------------------------------------------------------
+convert_time <- function(x, from, to) {
+  if (from == to) return(x)
+  f <- c(seconds = 1, minutes = 60, hours = 3600, days = 86400)
+  x * f[[from]] / f[[to]]
+}
+
+# ----------------------------------------------------------------------
+# Color utility: ensure exactly n colors (repeat/truncate/generate)
+# ----------------------------------------------------------------------
+ensure_colors <- function(n, cols = character(0)) {
+  cols <- cols[!is.na(cols) & nzchar(trimws(cols))]
+  if (length(cols) == 0) {
+    base <- tryCatch(RColorBrewer::brewer.pal(min(8, max(3, n)), "Set1"),
+                     error = function(e) grDevices::rainbow(min(8, max(3, n))))
+    return(grDevices::colorRampPalette(base)(n))
+  }
+  cols <- trimws(cols)
+  if (length(cols) < n) {
+    cols <- rep(cols, length.out = n)
+  } else if (length(cols) > n) {
+    cols <- cols[seq_len(n)]
+  }
+  cols
+}
+
 
 # ----------------------------------------------------------------------
 # Options
