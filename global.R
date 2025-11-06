@@ -67,6 +67,13 @@ read_file <- function(path, file_name) {
   df
 }
 
+# Notification helper  
+notify <- function(msg, type = c("message","warning","error"), duration = 6) {
+  type <- match.arg(type)
+  shiny::showNotification(msg, type = type, duration = duration)
+}
+
+
 # ======================================================================
 # Processing mode configuration (used by the generic processing module)
 # ======================================================================

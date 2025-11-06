@@ -70,7 +70,7 @@ processing_module_server <- function(id, rv, config) {
     }
     shiny::observeEvent(input$clear_console, {
       console_messages(character())
-      shiny::showNotification("Console cleared", type = "message")
+      notify("Console cleared.", type = "message")
     })
     
     # helpers
@@ -88,6 +88,12 @@ processing_module_server <- function(id, rv, config) {
       if (length(rv$raw_data_list) != length(rv$plate_plan_df_list)) {
         add_console_message(sprintf("❌ Error: Number of raw data files (%d) must match number of plate plans (%d).",
                                     length(rv$raw_data_list), length(rv$plate_plan_df_list)))
+        notify(
+          sprintf("Number of raw data files (%d) must match number of plate plans (%d).",
+                  length(rv$raw_data_list), length(rv$plate_plan_df_list)),
+          type = "error",
+          duration = NULL
+        )
         return(NULL)
       }
       
@@ -134,10 +140,10 @@ processing_module_server <- function(id, rv, config) {
         rv$mapping <- mapping_df
         
         add_console_message("✅ Mapping confirmed successfully!")
-        shiny::showNotification("Mapping confirmed successfully!", type = "message")
+        notify("Mapping confirmed successfully.", type = "message")
       }, error = function(e) {
         add_console_message(paste("❌ Error:", e$message))
-        shiny::showNotification(paste("Error:", e$message), type = "error")
+        notify(conditionMessage(e), type = "error", duration = NULL)
       })
     })
     
@@ -384,6 +390,11 @@ processing_module_server <- function(id, rv, config) {
     
     # main processing action
     shiny::observeEvent(input$run_processing, {
+      # === mapping between plate plan and raw data ===
+      if (is.null(rv$mapping) || is.null(rv$ordered_plate_plans)) {
+        notify("Please match raw data to plate plans, transitions and removal files before processing!", type = "error")
+        return()
+      }
       tryCatch({
         cfg <- get_cfg() # concrete config at runtime
         if (is.null(input$period_file))  stop("Please upload the Period Transitions File (Excel).")
@@ -499,11 +510,11 @@ processing_module_server <- function(id, rv, config) {
         )
         
         add_console_message("✅ Results stored in rv$processing_results.")
-        shiny::showNotification("Processing completed successfully!", type = "message")
+        notify("Processing completed successfully.", type = "message")
         
       }, error = function(e) {
         add_console_message(paste("❌ Error:", e$message))
-        shiny::showNotification(paste("Error:", e$message), type = "error")
+        notify(conditionMessage(e), type = "error", duration = NULL)
       })
     })
     
@@ -571,3 +582,7 @@ processing_module_server <- function(id, rv, config) {
     })
   })
 }
+
+# ======================================================================
+# End of processing_module.R
+# ======================================================================

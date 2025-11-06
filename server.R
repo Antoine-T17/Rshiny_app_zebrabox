@@ -10,24 +10,23 @@ server <- function(input, output, session) {
   # ------------------------------------------------------------------
   rv <- shiny::reactiveValues(
     plate_plan_df_list                    = NULL,
+    plate_plan_type                       = NULL, 
     raw_data_list                         = NULL,
-    enriched_data_list                    = NULL,
-    zone_calculated_list                  = NULL,
-    all_zone_combined_df                  = NULL,
-    all_zone_combined_lineplots           = NULL,
+    mapping                               = NULL,
+    ordered_plate_plans                   = NULL,
+    processing_results                    = NULL,
+    # Visualisation
+    plot                                  = NULL,
     all_zone_combined_light_dark_boxplots = NULL,
     all_zone_combined_cum_boxplots        = NULL,
     all_zone_combined_delta_boxplots      = NULL,
-    plot                                  = NULL,
+    all_zone_combined_lineplots           = NULL,
+    # Modes
     primary_mode                          = NULL,
-    secondary_mode                        = NULL,
-    generated_figures                     = list(),
-    processing_results                    = NULL,
-    ordered_plate_plans                   = NULL,
-    mapping                               = NULL
+    secondary_mode                        = NULL
   )
   
-  # Flags to ensure we instantiate servers only once per session
+  # Prevent multiple module instantiations if mode changes or inputs refresh
   processing_started    <- shiny::reactiveVal(FALSE)
   visualization_started <- shiny::reactiveVal(FALSE)
   
@@ -126,47 +125,35 @@ server <- function(input, output, session) {
   # Reset Button (Full Reset of data/state). We do NOT recreate modules.
   # ------------------------------------------------------------------
   shiny::observeEvent(input$reset_app, {
-    # Clear data-related reactive values
     rv$plate_plan_df_list                    <- NULL
+    rv$plate_plan_type                       <- NULL
     rv$raw_data_list                         <- NULL
-    rv$enriched_data_list                    <- NULL
-    rv$zone_calculated_list                  <- NULL
-    rv$all_zone_combined_df                  <- NULL
-    rv$all_zone_combined_lineplots           <- NULL
-    rv$all_zone_combined_light_dark_boxplots <- NULL
-    rv$all_zone_combined_cum_boxplots        <- NULL
-    rv$all_zone_combined_delta_boxplots      <- NULL
+    rv$processing_results                    <- NULL
+    rv$ordered_plate_plans                   <- NULL
+    rv$mapping                               <- NULL
     rv$plot                                  <- NULL
     rv$primary_mode                          <- NULL
     rv$secondary_mode                        <- NULL
-    rv$generated_figures                     <- list()
-    rv$processing_results                    <- NULL
-    rv$ordered_plate_plans                   <- NULL
-    rv$mapping                                <- NULL
+    rv$all_zone_combined_light_dark_boxplots <- NULL
+    rv$all_zone_combined_cum_boxplots        <- NULL
+    rv$all_zone_combined_delta_boxplots      <- NULL
+    rv$all_zone_combined_lineplots           <- NULL
     
-    # Keep modules instantiated; just clear inputs/state
     shinyjs::reset("plate_plan-plate_plan_files")
     shinyjs::reset("raw_data-raw_data_files")
-    
     shiny::updateSelectInput(session, "raw_data-primary_mode",   selected = "")
     shiny::updateSelectInput(session, "raw_data-secondary_mode", selected = "")
+    shiny::updateSelectInput(session, "plate_plan-create_plate_plan", selected = "")
+    shiny::updateSelectInput(session, "plate_plan-plate_type",        selected = "")
+    shiny::updateSelectInput(session, "plate_plan-keep_border_wells", selected = "")
+    shiny::updateNumericInput(session, "plate_plan-plate_number",        value = 1)
+    shiny::updateNumericInput(session, "plate_plan-conditions_number",   value = 1)
+    shiny::updateNumericInput(session, "plate_plan-replicates_number",   value = 1)
+    shiny::updateNumericInput(session, "plate_plan-units_per_replicate", value = 1)
+    shiny::updateNumericInput(session, "plate_plan-seed_value",          value = 42)
+    shiny::updateTextInput(session, "plate_plan-conditions_name",      value = "")
+    shiny::updateTextInput(session, "plate_plan-plate_plan_name_xlsx", value = "plate_plan")
     
-    shiny::updateSelectInput(session, "plate_plan-create_plate_plan",  selected = "")
-    shiny::updateSelectInput(session, "plate_plan-plate_type",         selected = "")
-    shiny::updateSelectInput(session, "plate_plan-keep_border_wells",  selected = "")
-    
-    shiny::updateNumericInput(session, "plate_plan-plate_number",          value = 1)
-    shiny::updateNumericInput(session, "plate_plan-conditions_number",     value = 1)
-    shiny::updateNumericInput(session, "plate_plan-replicates_number",     value = 1)
-    shiny::updateNumericInput(session, "plate_plan-units_per_replicate",   value = 1)
-    shiny::updateNumericInput(session, "plate_plan-seed_value",            value = 42)
-    
-    shiny::updateTextInput(session, "plate_plan-conditions_name",       value = "")
-    shiny::updateTextInput(session, "plate_plan-plate_plan_name_xlsx",  value = "plate_plan")
-    
-    shiny::showNotification(
-      "Application fully reset — please reload your plate plans, raw data and modes.",
-      type = "message"
-    )
+    notify("Application fully reset — please reload your plate plans, raw data and modes.", "message")
   })
 }

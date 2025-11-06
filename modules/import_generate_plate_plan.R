@@ -126,7 +126,7 @@ plate_plan_server <- function(id, rv) {
           
           rv$plate_plan_df_list <- generate_plate_plan_shiny(inputs, write_files = FALSE)
           rv$plate_plan_type    <- rep(as.integer(input$plate_type), length(rv$plate_plan_df_list))
-          shiny::showNotification("Plate plan generated successfully!", type = "message")
+          notify("Plate plan generated successfully.", type = "message")
           
         } else {
           shiny::req(input$plate_plan_files)
@@ -139,11 +139,11 @@ plate_plan_server <- function(id, rv) {
             }
           }
           rv$plate_plan_df_list <- plate_plan_list
-          shiny::showNotification("Plate plans loaded successfully!", type = "message")
+          notify("Plate plans loaded successfully.", type = "message")
         }
       }, error = function(e) {
-        shiny::showNotification(paste("Error:", e$message), type = "error")
-        message("Error in generate_plate_plan_shiny: ", e$message)
+        notify(conditionMessage(e), type = "error", duration = NULL)
+        message("Error in generate_plate_plan_shiny: ", conditionMessage(e))
       })
     })
     
@@ -287,7 +287,7 @@ plate_plan_server <- function(id, rv) {
         shiny::req(input$download_plate_id)
         idx <- which(vapply(rv$plate_plan_df_list, function(df) df$plate_id[1], "") == input$download_plate_id)
         openxlsx::write.xlsx(rv$plate_plan_df_list[[idx]], file, rowNames = FALSE)
-        shiny::showNotification("Plate plan downloaded!", type = "message")
+        notify("Plate plan downloaded.", type = "message")
       }
     )
     
@@ -302,7 +302,7 @@ plate_plan_server <- function(id, rv) {
           path
         }, character(1))
         zip::zip(file, files = xlsx_files, mode = "cherry-pick")
-        shiny::showNotification("All plate plans downloaded as ZIP!", type = "message")
+        notify("All plate plans downloaded as ZIP.", type = "message")
       }
     )
   })

@@ -69,9 +69,9 @@ raw_data_server <- function(id, rv) {
       tryCatch({
         shiny::req(input$raw_data_files)
         rv$raw_data_list <- Map(read_file, input$raw_data_files$datapath, input$raw_data_files$name)
-        shiny::showNotification("Raw data loaded successfully!", type = "message")
+        notify("Raw data loaded successfully.", type = "message")
       }, error = function(e) {
-        shiny::showNotification(paste("Error loading files:", e$message), type = "error")
+        notify(conditionMessage(e), type = "error", duration = NULL)
       })
     })
     
@@ -106,7 +106,7 @@ raw_data_server <- function(id, rv) {
         # notify only when both selections are valid (non-NULL).
         # prevents notification when reset clears fields.
         if (!is.null(p) && !is.null(s)) {
-          showNotification("Modes updated successfully!", type = "message")
+          notify("Modes updated successfully.", type = "message")
         }
       }
     })
@@ -124,7 +124,8 @@ raw_data_server <- function(id, rv) {
     output$raw_data_tabs <- shiny::renderUI({
       shiny::req(rv$raw_data_list)
       if (length(rv$raw_data_list) == 0) {
-        return(shiny::div("No raw data loaded yet. Please upload and load raw data files."))
+        notify("No raw data loaded yet. Please upload and load raw data files.", type = "warning")
+        return(NULL)
       }
       
       tabs <- lapply(seq_along(rv$raw_data_list), function(i) {
