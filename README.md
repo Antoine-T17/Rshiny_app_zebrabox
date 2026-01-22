@@ -29,7 +29,7 @@ Data in many files and formats leads to errors, duplicates, and manual fixes. Th
 ### Get the app
 
 ```r
-source("run_app.R")
+shiny::runGitHub("Rshiny_app_zebrabox", "Antoine-T17")
 ```
 
 ### Load or Create a Plate Plan
