@@ -1,17 +1,5 @@
 # ZebRabox : **From raw data to interactive visualization.**
 
-::: hidden
-```{=html}
-<style>
-body {
-  text-align: justify;
-  text-justify: inter-word;
-}
-</style>
-```
-:::
-
-
 ## Introduction
 
 The ZebraBox chamber is a complete system for high-throughput behavioral tests. Applications include pharmacology, toxicology, ecotoxicology, and behavioral genetics. The device holds 6-, 12-, 24-, 48- or 96-well plates and has a high-resolution camera which films in visible or infrared light. Tests run from minutes to days and each data point links to a fixed time window (integration period). Output files are `.raw` and `.xls`.
