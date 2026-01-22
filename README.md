@@ -1,3 +1,5 @@
+<img src="www/my_sticker_without_border.png" align="right" width="100" />
+
 # ZebRabox : **From raw data to interactive visualization.**
 
 ## Introduction
