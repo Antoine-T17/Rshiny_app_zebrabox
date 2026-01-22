@@ -6,13 +6,21 @@
 # ----------------------------------------------------------------------
 # Utility: Install & Load Required Packages
 # ----------------------------------------------------------------------
-load_or_install <- function(pkgs) {
-  installed <- rownames(installed.packages())
+load_or_install <- function(pkgs, repos = "https://cloud.r-project.org") {
+  options(repos = c(CRAN = repos))
+  
   for (pkg in pkgs) {
-    if (! pkg %in% installed) {
-      install.packages(pkg, dependencies = TRUE)
+    if (!requireNamespace(pkg, quietly = TRUE)) {
+      message("Installing: ", pkg)
+      tryCatch(
+        install.packages(pkg, dependencies = TRUE),
+        error = function(e) stop("Install failed for ", pkg, ": ", e$message)
+      )
     }
-    library(pkg, character.only = TRUE)
+    
+    suppressPackageStartupMessages(
+      library(pkg, character.only = TRUE)
+    )
   }
 }
 
