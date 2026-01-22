@@ -8,9 +8,7 @@ The ZebraBox chamber is a complete system for high-throughput behavioral tests. 
 
 Data in many files and formats leads to errors, duplicates, and manual fixes. This app centralizes everything in one place. You get accurate, up-to-date, and auditable results without code. <br>
 
-::: centered-text
 **Simple : drag, drop, clean, merge, and analyze in a few clicks.**
-:::
 
 ## How to Use the App ?
 
