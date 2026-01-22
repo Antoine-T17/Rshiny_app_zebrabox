@@ -20,11 +20,11 @@ load_or_install <- function(pkgs) {
 # Required Packages
 # ----------------------------------------------------------------------
 required_pkgs <- c(
-  "shiny", "shinyjs", "shinydashboard",
+  "shiny", "shinyjs", "shinydashboard", "shinyWidgets",
   "bslib", "sass", "readxl", "openxlsx",
   "dplyr", "ggplot2", "ggforce", "plotly", "htmlwidgets", "DT",
   "zip", "scales", "rhandsontable", "shinyjqui",
-  "stringr", "RColorBrewer", "writexl", "purrr", "tidyr", "fmsb"
+  "stringr", "RColorBrewer", "writexl", "purrr", "tidyr", "fmsb", "ggiraph", "grDevices"
 )
 load_or_install(required_pkgs)
 

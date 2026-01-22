@@ -361,16 +361,46 @@ processing_module_server <- function(id, rv, config) {
       
       # If 0 and 2 present compute zone 1 using cfg$zone_num_cols
       if (all(c(0, 2) %in% zones) && length(cfg$zone_num_cols) > 0) {
-        zone_data[["1"]] <- zone_data[["0"]]
-        for (col in cfg$zone_num_cols) {
-          if (col %in% colnames(zone_data[["0"]]) && col %in% colnames(zone_data[["2"]])) {
-            zone_data[["1"]][[col]] <- zone_data[["0"]][[col]] - zone_data[["2"]][[col]]
-          } else {
-            # missing column: warn but continue
-            add_console_message(sprintf("⚠️ Plate %d - zone column '%s' missing for zone computation; skipping.", i, col))
+        
+        z0 <- zone_data[["0"]] |> dplyr::mutate(.row0 = dplyr::row_number())
+        z2 <- zone_data[["2"]]
+        
+        # Clés d’alignement : à adapter si tu as mieux.
+        # Ici : même animal + même start (temps) dans une même plaque.
+        keys <- intersect(c("plate_id", "animal", "start"), names(z0))
+        keys <- intersect(keys, names(z2))
+        
+        if (length(keys) < 2) {
+          add_console_message(sprintf("⚠️ Plate %d - Not enough keys to align zones 0 and 2; skipping zone 1.", i))
+        } else {
+          
+          # on ne garde que les colonnes utiles côté zone 2
+          z2_small <- z2 |> dplyr::select(dplyr::all_of(c(keys, cfg$zone_num_cols)))
+          
+          joined <- dplyr::left_join(
+            z0,
+            z2_small,
+            by = keys,
+            suffix = c("_0", "_2")
+          )
+          
+          for (col in cfg$zone_num_cols) {
+            c0 <- paste0(col, "_0")
+            c2 <- paste0(col, "_2")
+            if (c0 %in% names(joined) && c2 %in% names(joined)) {
+              joined[[col]] <- joined[[c0]] - joined[[c2]]
+            } else {
+              add_console_message(sprintf("⚠️ Plate %d - zone column '%s' missing after join; skipping.", i, col))
+            }
           }
+          
+          # reconstruire zone 1 au format “zone_data[[..]]”
+          zone_data[["1"]] <- joined |>
+            dplyr::arrange(.row0) |>
+            dplyr::select(-.row0, -dplyr::any_of(paste0(cfg$zone_num_cols, "_0")), -dplyr::any_of(paste0(cfg$zone_num_cols, "_2")))
+          
+          add_console_message(sprintf("✅ Plate %d - Zone 1 calculated by key-join (no recycling).", i))
         }
-        add_console_message(sprintf("✅ Plate %d - Zone 1 calculated.", i))
       }
       
       processed_zones <- purrr::map(names(zone_data), function(z) {
@@ -502,7 +532,7 @@ processing_module_server <- function(id, rv, config) {
           )
         }
         
-        add_console_message("\n ✅ Data processing completed for all plates!")
+        add_console_message("\n✅ Data processing completed for all plates!")
         
         rv$processing_results <- list(
           processed_data_list = processed_data_list,
