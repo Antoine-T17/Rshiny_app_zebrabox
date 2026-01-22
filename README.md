@@ -26,9 +26,7 @@ ZebraBox uses standard multi-well plates. Edge wells can show border effects. Th
 
 Raw files must be in `.xlsx`. Convert your original `.xls` files before loading. When loading, wait to see *Upload complete* to click on the button.
 
-::: warnings
 The number of raw files must match your plate plans.
-:::
 
 ### Choose Primary Mode
 
