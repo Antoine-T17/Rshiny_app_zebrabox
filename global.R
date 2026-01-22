@@ -6,21 +6,35 @@
 # ----------------------------------------------------------------------
 # Utility: Install & Load Required Packages
 # ----------------------------------------------------------------------
-load_or_install <- function(pkgs, repos = "https://cloud.r-project.org") {
+load_or_install <- function(
+    cran = character(),
+    github = character(),
+    repos = "https://cloud.r-project.org"
+) {
   options(repos = c(CRAN = repos))
   
-  for (pkg in pkgs) {
+  # CRAN
+  for (pkg in cran) {
     if (!requireNamespace(pkg, quietly = TRUE)) {
-      message("Installing: ", pkg)
-      tryCatch(
-        install.packages(pkg, dependencies = TRUE),
-        error = function(e) stop("Install failed for ", pkg, ": ", e$message)
-      )
+      message("Installing (CRAN): ", pkg)
+      install.packages(pkg, dependencies = TRUE)
     }
-    
-    suppressPackageStartupMessages(
-      library(pkg, character.only = TRUE)
-    )
+    suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+  }
+  
+  # GitHub (format "owner/repo")
+  if (length(github)) {
+    if (!requireNamespace("remotes", quietly = TRUE)) {
+      install.packages("remotes")
+    }
+    for (repo in github) {
+      pkg <- sub(".*/", "", repo)  # nom supposé du package = repo
+      if (!requireNamespace(pkg, quietly = TRUE)) {
+        message("Installing (GitHub): ", repo)
+        remotes::install_github(repo, dependencies = TRUE, upgrade = "never")
+      }
+      suppressPackageStartupMessages(library(pkg, character.only = TRUE))
+    }
   }
 }
 
