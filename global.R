@@ -4,51 +4,34 @@
 # ======================================================================
 
 # ----------------------------------------------------------------------
-# Utility: Install & Load Required Packages
-# ----------------------------------------------------------------------
-load_or_install <- function(
-    cran = character(),
-    github = character(),
-    repos = "https://cloud.r-project.org"
-) {
-  options(repos = c(CRAN = repos))
-  
-  # CRAN
-  for (pkg in cran) {
-    if (!requireNamespace(pkg, quietly = TRUE)) {
-      message("Installing (CRAN): ", pkg)
-      install.packages(pkg, dependencies = TRUE)
-    }
-    suppressPackageStartupMessages(library(pkg, character.only = TRUE))
-  }
-  
-  # GitHub (format "owner/repo")
-  if (length(github)) {
-    if (!requireNamespace("remotes", quietly = TRUE)) {
-      install.packages("remotes")
-    }
-    for (repo in github) {
-      pkg <- sub(".*/", "", repo)  # nom supposé du package = repo
-      if (!requireNamespace(pkg, quietly = TRUE)) {
-        message("Installing (GitHub): ", repo)
-        remotes::install_github(repo, dependencies = TRUE, upgrade = "never")
-      }
-      suppressPackageStartupMessages(library(pkg, character.only = TRUE))
-    }
-  }
-}
-
-# ----------------------------------------------------------------------
 # Required Packages
 # ----------------------------------------------------------------------
-required_pkgs <- c(
-  "shiny", "shinyjs", "shinydashboard", "shinyWidgets",
-  "bslib", "sass", "readxl", "openxlsx",
-  "dplyr", "ggplot2", "ggforce", "plotly", "htmlwidgets", "DT",
-  "zip", "scales", "rhandsontable", "shinyjqui",
-  "stringr", "RColorBrewer", "writexl", "purrr", "tidyr", "fmsb", "ggiraph", "grDevices"
-)
-load_or_install(required_pkgs)
+
+library(shiny)
+library(shinyjs)
+library(shinydashboard)
+library(shinyWidgets)
+library(bslib)
+library(sass)
+library(readxl)
+library(openxlsx)
+library(dplyr)
+library(ggplot2)
+library(ggforce)
+library(plotly)
+library(htmlwidgets)
+library(DT)
+library(zip)
+library(scales)
+library(rhandsontable)
+library(shinyjqui)
+library(stringr)
+library(RColorBrewer)
+library(writexl)
+library(purrr)
+library(tidyr)
+library(fmsb)
+library(ggiraph)
 
 # ----------------------------------------------------------------------
 # Global Utility Functions
