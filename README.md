@@ -33,9 +33,12 @@ This is the most reliable option (especially on Windows / slow connections).
 -   Restore the exact package versions and run the app:
 
 ```r
-install.packages("renv")
-renv::restore(prompt = FALSE)
-shiny::runApp()
+p <- file.path(path.expand("~"), "Rshiny_app_zebrabox")
+if (!dir.exists(p)) system2("git", c("clone","https://github.com/Antoine-T17/Rshiny_app_zebrabox.git", p))
+system2("git", c("-C", p, "pull"))
+if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
+renv::restore(project = p, prompt = FALSE)
+shiny::runApp(p)
 ```
 
 ### Load or Create a Plate Plan
