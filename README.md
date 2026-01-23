@@ -33,12 +33,14 @@ This is the most reliable option (especially on Windows / slow connections).
 -   Restore the exact package versions and run the app:
 
 ```r
-p <- file.path(path.expand("~"), "Rshiny_app_zebrabox")
-if (!dir.exists(p)) system2("git", c("clone","https://github.com/Antoine-T17/Rshiny_app_zebrabox.git", p))
-system2("git", c("-C", p, "pull"))
-if (!requireNamespace("renv", quietly = TRUE)) install.packages("renv")
-renv::restore(project = p, prompt = FALSE)
-shiny::runApp(p)
+options(repos=c(CRAN="https://cloud.r-project.org"));options(renv.consent=TRUE)
+base<-file.path(path.expand("~"),"Rprojects");dir.create(base,recursive=TRUE,showWarnings=FALSE)
+p<-file.path(base,"Rshiny_app_zebrabox")
+if(!dir.exists(p)){tf<-tempfile(fileext=".zip");download.file("https://github.com/Antoine-T17/Rshiny_app_zebrabox/archive/refs/heads/main.zip",tf,mode="wb");unzip(tf,exdir=base);file.rename(file.path(base,"Rshiny_app_zebrabox-main"),p)}
+if(!requireNamespace("renv",quietly=TRUE)) install.packages("renv")
+renv::restore(project=p,prompt=FALSE)
+appdir<-dirname(list.files(p,pattern="^app\\.R$",recursive=TRUE,full.names=TRUE)[1])
+shiny::runApp(appdir)
 ```
 
 ### Load or Create a Plate Plan
