@@ -5,14 +5,22 @@ if (file.exists("renv.lock")) {
   if (!requireNamespace("renv", quietly = TRUE)) {
     install.packages("renv", repos = "https://cloud.r-project.org")
   }
-  renv::activate()
   
-  st <- tryCatch(renv::status(), error = function(e) NULL)
+  options(renv.consent = TRUE)   
+  renv::load(project = ".")     
+  
+  st <- tryCatch(renv::status(project = "."), error = function(e) NULL)
   if (!is.null(st) && isFALSE(st$synchronized)) {
-    stop(
-      "Dépendances renv non installées / non synchronisées.\n",
-      "Dans le dossier du projet, exécute : renv::restore()\n",
-      "Puis relance l'application."
+    message("renv: dependencies refresh (first launch)…")
+    tryCatch(
+      renv::restore(project = ".", prompt = FALSE),
+      error = function(e) {
+        stop(
+          "renv::restore() has failed.\n",
+          "Frequent cause: missing system dependencies (Rtools under Windows, libs curl/xml, etc.).\n",
+          "Details: ", conditionMessage(e)
+        )
+      }
     )
   }
 }

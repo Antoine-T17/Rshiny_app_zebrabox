@@ -3,35 +3,17 @@
 # Global setup and utilities (runs once per R session)
 # ======================================================================
 
-# ----------------------------------------------------------------------
-# Required Packages
-# ----------------------------------------------------------------------
+pkgs <- c("shiny","shinyjs","shinydashboard","shinyWidgets","bslib","sass",
+          "readxl","openxlsx","dplyr","ggplot2","ggforce","plotly","htmlwidgets",
+          "DT","zip","scales","rhandsontable","shinyjqui","stringr","RColorBrewer",
+          "writexl","purrr","tidyr","fmsb","ggiraph")
 
-library(shiny)
-library(shinyjs)
-library(shinydashboard)
-library(shinyWidgets)
-library(bslib)
-library(sass)
-library(readxl)
-library(openxlsx)
-library(dplyr)
-library(ggplot2)
-library(ggforce)
-library(plotly)
-library(htmlwidgets)
-library(DT)
-library(zip)
-library(scales)
-library(rhandsontable)
-library(shinyjqui)
-library(stringr)
-library(RColorBrewer)
-library(writexl)
-library(purrr)
-library(tidyr)
-library(fmsb)
-library(ggiraph)
+missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
+if (length(missing)) {
+  stop("Missing packages: ", paste(missing, collapse = ", "),
+       "\nTry to restart the app (renv::restore should download them).")
+}
+invisible(lapply(pkgs, library, character.only = TRUE))
 
 # ----------------------------------------------------------------------
 # Global Utility Functions
@@ -291,4 +273,4 @@ module_files <- list.files(
   recursive  = TRUE
 )
 module_files <- sort(module_files)
-invisible(lapply(module_files, source))
+invisible(lapply(module_files, function(f) source(f, local = TRUE)))

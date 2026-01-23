@@ -12,12 +12,30 @@ Data in many files and formats leads to errors, duplicates, and manual fixes. Th
 
 **Simple : drag, drop, clean, merge, and analyze in a few clicks.**
 
-## How to Use the App ?
+## How to run the app (local)
 
-### Get the app
+There are two ways to run the app on your computer.
+
+### Option 1 — Run directly from GitHub (quick)
+This is the fastest option. On first launch, packages may be installed via `renv`, so it can take a few minutes.
 
 ```r
+if (!requireNamespace("shiny", quietly = TRUE)) install.packages("shiny")
 shiny::runGitHub("Rshiny_app_zebrabox", "Antoine-T17")
+```
+
+### Option 2 — Download/clone the repository (recommended)
+
+This is the most reliable option (especially on Windows / slow connections).
+
+-   Download the repository (Code → Download ZIP) or clone it.
+-   Open RStudio and set your working directory to the project folder (`setwd()` function)
+-   Restore the exact package versions and run the app:
+
+```r
+install.packages("renv")
+renv::restore(prompt = FALSE)
+shiny::runApp()
 ```
 
 ### Load or Create a Plate Plan
