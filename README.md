@@ -29,25 +29,12 @@ shiny::runGitHub("Rshiny_app_zebrabox", "Antoine-T17")
 This is the most reliable option (especially on Windows / slow connections).
 
 -   Download the repository (Code → Download ZIP) or clone it.
--   Open RStudio and set your working directory to the project folder (`setwd()` function)
--   Restore the exact package versions and run the app:
+-   Extract the ZIP and open `pipeline_zebrabox_treatment_shiny_app.Rproject`
+-   Run the following line : 
 
 ```r
-options(repos=c(CRAN="https://cloud.r-project.org"),pkgType="binary",renv.consent=TRUE)
-base<-file.path(path.expand("~"),"Rprojects");dir.create(base,recursive=TRUE,showWarnings=FALSE)
-p<-file.path(base,"Rshiny_app_zebrabox")
-if(!dir.exists(p)){tf<-tempfile(fileext=".zip");download.file("https://github.com/Antoine-T17/Rshiny_app_zebrabox/archive/refs/heads/main.zip",tf,mode="wb");unzip(tf,exdir=base);file.rename(file.path(base,"Rshiny_app_zebrabox-main"),p)}
-if(!requireNamespace("renv",quietly=TRUE)) install.packages("renv")
-
-if(.Platform$OS.type=="windows" && Sys.which("make")=="")
-  stop("Rtools44 is required (make not found). Install Rtools44, restart R/RStudio, then re-run this script.")
-
-renv::restore(project=p,prompt=FALSE)
-appdir<-if(file.exists(file.path(p,"app.R"))) p else dirname(list.files(p,pattern="^app\\.R$",recursive=TRUE,full.names=TRUE)[1])
-shiny::runApp(appdir)
-
+shiny::runApp()
 ```
-
 ### Load or Create a Plate Plan
 
 ZebraBox uses standard multi-well plates. Edge wells can show border effects. The app can generate a random plan. Download it as `.xlsx` or view it as a table and figure. If you already have a plan, load it and wait to see *Upload complete* to click on the button. Column names must follow the required format. *What is the required format?* Download a [96-well sample plate plan](inputs/sample_plate_plan_plate_1.xlsx).
