@@ -3,17 +3,45 @@
 # Global setup and utilities (runs once per R session)
 # ======================================================================
 
-pkgs <- c("shiny","shinyjs","shinydashboard","shinyWidgets","bslib","sass",
-          "readxl","openxlsx","dplyr","ggplot2","ggforce","plotly","htmlwidgets",
-          "DT","zip","scales","rhandsontable","shinyjqui","stringr","RColorBrewer",
-          "writexl","purrr","tidyr","fmsb","ggiraph")
+# ------------------------------------------------------------------------------
+# Required packages (checked early with clear error messages)
+# ------------------------------------------------------------------------------
 
+pkgs <- c(
+  "shiny","shinyjs","shinydashboard","shinyWidgets","bslib","sass",
+  "readxl","openxlsx","dplyr","ggplot2","ggforce","plotly","htmlwidgets",
+  "DT","zip","scales","rhandsontable","shinyjqui","stringr","RColorBrewer",
+  "writexl","purrr","tidyr","fmsb","ggiraph"
+)
+
+# Check which packages are missing (do not attach packages yet)
 missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
-if (length(missing)) {
-  stop("Missing packages: ", paste(missing, collapse = ", "),
-       "\nTry to restart the app (renv::restore should download them).")
+
+# If we are in a renv project and packages are missing, try restoring once.
+# This helps on fresh machines where users run the app via runGitHub().
+if (length(missing) > 0 && file.exists("renv.lock") && requireNamespace("renv", quietly = TRUE)) {
+  message(
+    "Missing packages detected: ", paste(missing, collapse = ", "),
+    "\nAttempting to install required dependencies via renv::restore()..."
+  )
+  try(renv::restore(project = ".", prompt = FALSE), silent = TRUE)
+  
+  # Re-check after restore attempt
+  missing <- pkgs[!vapply(pkgs, requireNamespace, logical(1), quietly = TRUE)]
 }
+
+# If still missing, stop with a helpful message
+if (length(missing) > 0) {
+  stop(
+    "Missing packages: ", paste(missing, collapse = ", "),
+    "\nIf you are on Windows, make sure Rtools is installed.",
+    "\nThen re-run: renv::restore(prompt = FALSE)"
+  )
+}
+
+# Attach packages now that we know they're installed
 invisible(lapply(pkgs, library, character.only = TRUE))
+
 
 # ----------------------------------------------------------------------
 # Global Utility Functions
@@ -266,11 +294,6 @@ options(shiny.maxRequestSize = 500 * 1024^2)
 # ----------------------------------------------------------------------
 # Auto-load All Modules
 # ----------------------------------------------------------------------
-module_files <- list.files(
-  path       = "modules",
-  pattern    = "\\.R$",
-  full.names = TRUE,
-  recursive  = TRUE
-)
-module_files <- sort(module_files)
-invisible(lapply(module_files, function(f) source(f, local = TRUE)))
+module_files <- sort(list.files("modules", pattern = "\\.R$", full.names = TRUE, recursive = TRUE))
+module_env <- environment()  # env de global.R (persistant)
+invisible(lapply(module_files, function(f) source(f, local = module_env)))
